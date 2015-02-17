@@ -50,6 +50,11 @@ public:
 		return m_me;
 	}
 
+	virtual bool blocksPlayer()
+	{
+		return true;
+	}
+
 private:
 	StudentWorld* m_world;
 	bool m_alive;
@@ -109,6 +114,11 @@ public:
 		return m_ammunition;
 	}
 
+	bool blocksPlayer()
+	{
+		return false;
+	}
+
 private:
 	int m_ammunition;
 
@@ -132,6 +142,11 @@ public:
 	void doSomething()
 	{
 		//do nothing
+	}
+
+	bool blocksPlayer()
+	{
+		return false;
 	}
 
 private:
@@ -164,6 +179,11 @@ public:
 	}
 	
 	void doSomething();
+
+	bool blocksPlayer()
+	{
+		return true;
+	}
 private:
 
 };

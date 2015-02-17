@@ -19,21 +19,24 @@ void Player::doSomething()
 
 			ap = getWorld()->getActor(getX() - 1, getY());
 
-			//check to see if the player can actually move
-			if (getWorld()->whatTypeIsThis(ap) == Level::empty)
+			if (!ap) //this means the spot is empty
 			{
 				moveTo(getX() - 1, getY());
 			}
-			//boulder stuff
-			else if (getWorld()->whatTypeIsThis(ap) == Level::boulder)
+
+			else if (!(ap->blocksPlayer()))
 			{
-				Boulder* bp = dynamic_cast<Boulder*>(ap);
-				if (bp->push(left) == true)
+				Boulder* bp = dynamic_cast<Boulder*> (ap);
+
+				if (bp == nullptr) // Here, we know the player can walk directly onto the other actor.
+				{				   //We know if this check fails, then the player tried to walk onto a boulder
+					moveTo(getX() - 1, getY());
+				}
+				else if (bp->push(left) == true) //check to see if we can move the boulder
 				{
 					moveTo(getX() - 1, getY());
 				}
 			}
-
 			break;
 		case KEY_PRESS_DOWN:
 			//change which way the player faces
@@ -41,16 +44,21 @@ void Player::doSomething()
 
 			ap = getWorld()->getActor(getX(), getY() - 1);
 
-			//check to see if the player can actually move
-			if (getWorld()->whatTypeIsThis(ap) == Level::empty)
+			if (!ap) //this means the spot is empty
 			{
 				moveTo(getX(), getY() - 1);
 			}
-			//boulder stuff
-			else if (getWorld()->whatTypeIsThis(ap) == Level::boulder)
+
+			else if (!(ap->blocksPlayer()))
 			{
-				Boulder* bp = dynamic_cast<Boulder*>(ap);
-				if (bp->push(down) == true)
+				Boulder* bp = dynamic_cast<Boulder*> (ap);
+
+				if (bp == nullptr) // Here, we know the player can walk directly onto the other actor.
+				{				   //We know if this check fails, then the player tried to walk onto a boulder
+					moveTo(getX(), getY() - 1);
+				}
+
+				else if (bp->push(down) == true) //check to see if we can move the boulder
 				{
 					moveTo(getX(), getY() - 1);
 				}
@@ -62,16 +70,20 @@ void Player::doSomething()
 
 			ap = getWorld()->getActor(getX() + 1, getY());
 
-			//check to see if the player can actually move
-			if (getWorld()->whatTypeIsThis(ap) == Level::empty)
+			if (!ap) //this means the spot is empty
 			{
 				moveTo(getX() + 1, getY());
 			}
-			//boulder stuff
-			else if (getWorld()->whatTypeIsThis(ap) == Level::boulder)
+
+			else if (!(ap->blocksPlayer()))
 			{
-				Boulder* bp = dynamic_cast<Boulder*>(ap);
-				if (bp->push(right) == true)
+				Boulder* bp = dynamic_cast<Boulder*> (ap);
+
+				if (bp == nullptr) // Here, we know the player can walk directly onto the other actor.
+				{				   //We know if this check fails, then the player tried to walk onto a boulder
+					moveTo(getX() + 1, getY());
+				}
+				else if (bp->push(right) == true) //check to see if we can move the boulder
 				{
 					moveTo(getX() + 1, getY());
 				}
@@ -83,17 +95,21 @@ void Player::doSomething()
 
 			ap = getWorld()->getActor(getX(), getY() + 1);
 
-			//check to see if the player can actually move
-			if (getWorld()->whatTypeIsThis(ap) == Level::empty)
+			if (!ap) //this means the spot is empty
 			{
 				moveTo(getX(), getY() + 1);
 			}
 
-			//boulder stuff
-			else if (getWorld()->whatTypeIsThis(ap) == Level::boulder)
+			else if (!(ap->blocksPlayer()))
 			{
-				Boulder* bp = dynamic_cast<Boulder*>(ap);
-				if (bp->push(up) == true)
+				Boulder* bp = dynamic_cast<Boulder*> (ap);
+
+				if (bp == nullptr) // Here, we know the player can walk directly onto the other actor.
+				{				   //We know if this check fails, then the player tried to walk onto a boulder
+					moveTo(getX(), getY() + 1);
+				}
+
+				else if (bp->push(up) == true) //check to see if we can move the boulder
 				{
 					moveTo(getX(), getY() + 1);
 				}
@@ -124,9 +140,9 @@ bool Boulder::push(Direction dir)
 		}
 		return false;
 	}
-	if (dir == right)
+	else if (dir == right)
 	{
-		Actor* ap = getWorld()->getActor(getX() + 1, getY() - 1);
+		Actor* ap = getWorld()->getActor(getX() + 1, getY());
 
 		if (getWorld()->whatTypeIsThis(ap) == Level::empty
 			|| getWorld()->whatTypeIsThis(ap) == Level::hole)
@@ -136,7 +152,7 @@ bool Boulder::push(Direction dir)
 		}
 		return false;
 	}
-	if (dir == down)
+	else if (dir == down)
 	{
 		Actor* ap = getWorld()->getActor(getX(), getY() - 1);
 
@@ -148,7 +164,7 @@ bool Boulder::push(Direction dir)
 		}
 		return false;
 	}
-	if (dir == left)
+	else // (dir == left)
 	{
 		Actor* ap = getWorld()->getActor(getX()  - 1, getY());
 
