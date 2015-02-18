@@ -21,7 +21,7 @@ public:
 	~StudentWorld()
 	{
 		delete m_player;
-		std::list<Actor*>::iterator ap = m_ActorList.begin();
+		auto ap = m_ActorList.begin();
 		while (ap != m_ActorList.end())
 		{
 			delete *ap;
@@ -36,11 +36,6 @@ public:
 	{
 		return m_player;
 	}
-
-	Level::MazeEntry ActorAt(int x, int y)
-	{
-		return m_maze[x][y];
-	}
 	
 	Actor* getActor(int x, int y)
 	{
@@ -48,6 +43,22 @@ public:
 		{
 			if (ap->getX() == x && ap->getY() == y)
 				return ap;
+		}
+		return nullptr;
+	}
+
+	Boulder* findBoulder(int x, int y)
+	{
+		for (auto ap : m_ActorList)
+		{
+			if (ap->getX() == x && ap->getY() == y)
+			{
+				Boulder* bp = dynamic_cast<Boulder*>(ap);
+				if (bp != nullptr)
+				{
+					return bp;
+				}
+			}
 		}
 		return nullptr;
 	}
@@ -75,11 +86,12 @@ public:
 
 	Level::MazeEntry whatTypeIsThis(Actor* ap);
 
+	void removeDeadActors();
+
 	int loadAlevel();
 	void setDisplayText();
 
 private:
-	Level::MazeEntry m_maze[VIEW_WIDTH][VIEW_HEIGHT];
 	std::list<Actor*> m_ActorList;
 	Player* m_player;
 	unsigned int m_bonus;

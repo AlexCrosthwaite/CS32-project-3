@@ -13,8 +13,8 @@ class StudentWorld;
 class Actor : public GraphObject
 {
 public:
-	Actor(int imageID, int startX, int startY, StudentWorld* studentWorld, 
-		Level::MazeEntry entry, Direction startDirection = none)
+	Actor(int imageID, int startX, int startY, 
+		StudentWorld* studentWorld, Direction startDirection = none)
 		: GraphObject(imageID, startX, startY, startDirection)
 	{
 		setVisible(true);
@@ -45,11 +45,6 @@ public:
 		m_alive = false;
 	}
 
-	Level::MazeEntry entry()
-	{
-		return m_me;
-	}
-
 	virtual bool blocksPlayer()
 	{
 		return true;
@@ -58,16 +53,15 @@ public:
 private:
 	StudentWorld* m_world;
 	bool m_alive;
-	Level::MazeEntry m_me;
 };
 
 
 class HealthActor : public Actor
 {
 public:
-	HealthActor(int imageID, int startX, int startY, StudentWorld* studentWorld, 
-		Level::MazeEntry entry, Direction startDirection = none)
-	: Actor(imageID, startX, startY, studentWorld, entry, startDirection)
+	HealthActor(int imageID, int startX, int startY, 
+		StudentWorld* studentWorld, Direction startDirection = none)
+	: Actor(imageID, startX, startY, studentWorld, startDirection)
 	{
 	}
 	
@@ -96,7 +90,7 @@ class Player : public HealthActor
 {
 public:
 	Player(int startX, int startY, StudentWorld* studentWorld)
-		: HealthActor(IID_PLAYER, startX, startY, studentWorld, Level::player, right)
+		: HealthActor(IID_PLAYER, startX, startY, studentWorld, right)
 	{	
 		setHitpoints(20);
 		m_ammunition = 20;
@@ -128,7 +122,7 @@ class Boulder : public HealthActor
 {
 public:
 	Boulder(int startX, int startY, StudentWorld* studentWorld)
-		: HealthActor(IID_BOULDER, startX, startY, studentWorld, Level::boulder)
+		: HealthActor(IID_BOULDER, startX, startY, studentWorld)
 	{
 		setHitpoints(10);
 	}
@@ -157,7 +151,7 @@ class Wall : public Actor
 {
 public:
 	Wall(int startX, int startY, StudentWorld* studentWorld)
-		: Actor(IID_WALL, startX, startY, studentWorld, Level::wall)
+		: Actor(IID_WALL, startX, startY, studentWorld)
 	{
 	}
 
@@ -174,7 +168,7 @@ class Hole : public Actor
 {
 public:
 	Hole(int startX, int startY, StudentWorld* studentWorld)
-		: Actor(IID_HOLE, startX, startY, studentWorld, Level::hole)
+		: Actor(IID_HOLE, startX, startY, studentWorld)
 	{
 	}
 	
@@ -187,6 +181,26 @@ public:
 private:
 
 };
+
+class Goodie : public Actor
+{
+public:
+	Goodie(int imageID, int startX, int startY, StudentWorld* studentworld)
+		: Actor(imageID, startX, startY, studentworld)
+	{
+	}
+
+	~Goodie()
+	{
+	}
+
+	bool doSomethingGoodie();
+
+private:
+
+};
+
+
 
 
 #endif // ACTOR_H_

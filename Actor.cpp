@@ -132,23 +132,50 @@ bool Boulder::push(Direction dir)
 	{
 		Actor* ap = getWorld()->getActor(getX(), getY() + 1);
 
-		if (getWorld()->whatTypeIsThis(ap) == Level::empty
+		if (ap == nullptr)
+		{
+			moveTo(getX(), getY() + 1);
+			return true;
+		}
+		else
+		{
+			Hole* hp = dynamic_cast<Hole*>(ap);
+			if (hp)
+			{
+				moveTo(getX(), getY() + 1);
+				return true;
+			}
+		}
+		return false;
+			
+			
+			
+			
+			/*(getWorld()->whatTypeIsThis(ap) == Level::empty
 			|| getWorld()->whatTypeIsThis(ap) == Level::hole)
 		{
 			moveTo(getX(), getY() + 1);
 			return true;
 		}
-		return false;
+		return false;*/
 	}
 	else if (dir == right)
 	{
 		Actor* ap = getWorld()->getActor(getX() + 1, getY());
 
-		if (getWorld()->whatTypeIsThis(ap) == Level::empty
-			|| getWorld()->whatTypeIsThis(ap) == Level::hole)
+		if (ap == nullptr)
 		{
 			moveTo(getX() + 1, getY());
 			return true;
+		}
+		else
+		{
+			Hole* hp = dynamic_cast<Hole*>(ap);
+			if (hp)
+			{
+				moveTo(getX() + 1, getY());
+				return true;
+			}
 		}
 		return false;
 	}
@@ -156,11 +183,19 @@ bool Boulder::push(Direction dir)
 	{
 		Actor* ap = getWorld()->getActor(getX(), getY() - 1);
 
-		if (getWorld()->whatTypeIsThis(ap) == Level::empty
-			|| getWorld()->whatTypeIsThis(ap) == Level::hole)
+		if (ap == nullptr)
 		{
 			moveTo(getX(), getY() - 1);
 			return true;
+		}
+		else
+		{
+			Hole* hp = dynamic_cast<Hole*>(ap);
+			if (hp)
+			{
+				moveTo(getX(), getY() - 1);
+				return true;
+			}
 		}
 		return false;
 	}
@@ -168,11 +203,19 @@ bool Boulder::push(Direction dir)
 	{
 		Actor* ap = getWorld()->getActor(getX()  - 1, getY());
 
-		if (getWorld()->whatTypeIsThis(ap) == Level::empty
-			|| getWorld()->whatTypeIsThis(ap) == Level::hole)
+		if (ap == nullptr)
 		{
 			moveTo(getX() - 1, getY());
 			return true;
+		}
+		else
+		{
+			Hole* hp = dynamic_cast<Hole*>(ap);
+			if (hp)
+			{
+				moveTo(getX() - 1, getY());
+				return true;
+			}
 		}
 		return false;
 	}
@@ -181,7 +224,29 @@ void Hole::doSomething()
 {
 	if (!isAlive())
 		return;
+
+	Boulder* bp = getWorld()->findBoulder(getX(), getY());
+
+	if (bp != nullptr)
 	{
+		setDead();
+		bp->setDead();
+	}
+}
+
+bool Goodie::doSomethingGoodie()
+{
+	if (!isAlive())
+		return false;
+	else
+	{
+		if (getWorld()->player()->getX() == getX()
+			&& getWorld()->player()->getY() == getY())
+		{
+			setDead();
+			getWorld()->playSound(SOUND_GOT_GOODIE);
+			return true;
+		}
 
 	}
 }

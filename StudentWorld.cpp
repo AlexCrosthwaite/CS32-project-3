@@ -2,6 +2,7 @@
 #include "Level.h"
 #include "GameConstants.h"
 #include <string>
+#include <list>
 #include <sstream>
 #include <iomanip>
 using namespace std;
@@ -31,17 +32,32 @@ int StudentWorld::loadAlevel()
 		cout << "Level was improperly formatted\n";
 	else if (result == Level::load_success)
 	{
-		for (int i = 0; i < VIEW_HEIGHT; i++)
+		for (int i = 0; i < VIEW_WIDTH; i++)
 		{
-			for (int j = 0; j < VIEW_WIDTH; j++)
+			for (int j = 0; j < VIEW_HEIGHT; j++)
 			{
-				Level::MazeEntry item = lev.getContentsOf(j, i);
-				if (item == Level::wall || item == Level::player)
+				Level::MazeEntry item = lev.getContentsOf(i, j);
+				switch (item)
+				{
+				case Level::player:
+					m_player = new Player(i, j, this);
+					break;
+				case Level::wall:
+					m_ActorList.push_back(new Wall(i, j, this));
+					break;
+				case Level::boulder:
+					m_ActorList.push_back(new Boulder(i, j, this));
+					break;
+				case Level::hole:
+					m_ActorList.push_back(new Hole(i, j, this));
+					break;
+				}
+				/*if (item == Level::wall || item == Level::player)
 					m_maze[j][i] = item;
 				else if (item == Level::boulder || item == Level::hole)
 					m_maze[j][i] = item;
 				else
-					m_maze[j][i] = Level::empty;
+					m_maze[j][i] = Level::empty;*/
 			
 			}
 		}
@@ -89,30 +105,30 @@ int StudentWorld::init()
 		exit(1); //level loaded incorrectly or had bad format
 
 	//our maze data member now contains the data for the level
-	for (int i = 0; i < VIEW_HEIGHT; i++)
-	{
-		for (int j = 0; j < VIEW_WIDTH; j++)
-		{
-			Level::MazeEntry me = m_maze[j][i];
-			switch (me)
-			{
-			case Level::empty:	//do nothing
-				break;
-			case Level::wall:
-				m_ActorList.push_back(new Wall(j, i, this));
-				break;
-			case Level::boulder:
-				m_ActorList.push_back(new Boulder(j, i, this));
-				break;
-			case Level::hole:
-				m_ActorList.push_back(new Hole(j, i, this));
-				break;
-			case Level::player:
-				m_player = new Player(j, i, this);
-				break;
-			}
-		}
-	}
+	//for (int i = 0; i < VIEW_HEIGHT; i++)
+	//{
+	//	for (int j = 0; j < VIEW_WIDTH; j++)
+	//	{
+	//		Level::MazeEntry me = m_maze[j][i];
+	//		switch (me)
+	//		{
+	//		case Level::empty:	//do nothing
+	//			break;
+	//		case Level::wall:
+	//			m_ActorList.push_back(new Wall(j, i, this));
+	//			break;
+	//		case Level::boulder:
+	//			m_ActorList.push_back(new Boulder(j, i, this));
+	//			break;
+	//		case Level::hole:
+	//			m_ActorList.push_back(new Hole(j, i, this));
+	//			break;
+	//		case Level::player:
+	//			m_player = new Player(j, i, this);
+	//			break;
+	//		}
+	//	}
+	//}
 	m_bonus = 1000;
 	return GWSTATUS_CONTINUE_GAME;
 }
@@ -140,6 +156,8 @@ int StudentWorld::move()
 		}
 	}
 
+	removeDeadActors();
+
 	decBonus();
 
 	//check if the player died during this tick
@@ -155,7 +173,7 @@ int StudentWorld::move()
 void StudentWorld::cleanUp()
 {
 	delete m_player;
-	std::list<Actor*>::iterator ap = m_ActorList.begin();
+	auto ap = m_ActorList.begin();
 	while (ap != m_ActorList.end())
 	{
 		delete *ap;
@@ -176,9 +194,21 @@ Level::MazeEntry StudentWorld::whatTypeIsThis(Actor* ap)
 		return Level::boulder;
 	Hole* hp = dynamic_cast<Hole*>(ap);
 	if (hp != nullptr)
-		return Level::hole;;
-
+		return Level::hole;
 	//ADD MORE HERE AS YOU ADD ACTORS
+}
 
+void StudentWorld::removeDeadActors()
+{
+	for (auto ap = m_ActorList.begin(); ap != m_ActorList.end(); ap++)
+	{
+		if (!((*ap)->isAlive()))
+		{
+			delete (*ap);
+			ap = m_ActorList.erase(ap);
+			ap--;
+		}
+
+	}
 }
 // Students:  Add code to this file (if you wish), StudentWorld.h, Actor.h and Actor.cpp
