@@ -83,6 +83,11 @@ public:
 	//sets the display text at the top of the screen 
 	void setDisplayText();
 
+	//add a bullet into the level
+	void ShootBullet(int x, int y, GraphObject::Direction dir);
+
+	Actor* FindNOTBullet(int x, int y);
+
 private:
 	std::list<Actor*> m_ActorList;
 	Player* m_player;

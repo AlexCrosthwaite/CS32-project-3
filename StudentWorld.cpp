@@ -1,6 +1,7 @@
 #include "StudentWorld.h"
 #include "Level.h"
 #include "GameConstants.h"
+#include "Actor.h"
 #include <string>
 #include <list>
 #include <sstream>
@@ -116,31 +117,6 @@ int StudentWorld::init()
 	if (loadAlevel() == -1)
 		exit(1); //level loaded incorrectly or had bad format
 
-	//our maze data member now contains the data for the level
-	//for (int i = 0; i < VIEW_HEIGHT; i++)
-	//{
-	//	for (int j = 0; j < VIEW_WIDTH; j++)
-	//	{
-	//		Level::MazeEntry me = m_maze[j][i];
-	//		switch (me)
-	//		{
-	//		case Level::empty:	//do nothing
-	//			break;
-	//		case Level::wall:
-	//			m_ActorList.push_back(new Wall(j, i, this));
-	//			break;
-	//		case Level::boulder:
-	//			m_ActorList.push_back(new Boulder(j, i, this));
-	//			break;
-	//		case Level::hole:
-	//			m_ActorList.push_back(new Hole(j, i, this));
-	//			break;
-	//		case Level::player:
-	//			m_player = new Player(j, i, this);
-	//			break;
-	//		}
-	//	}
-	//}
 	m_bonus = 1000;
 	return GWSTATUS_CONTINUE_GAME;
 }
@@ -176,9 +152,6 @@ int StudentWorld::move()
 	if (getLives() < livesBefore)
 		return GWSTATUS_PLAYER_DIED;
 
-
-
-	// This code is here merely to allow the game to build, run, and terminate after hitting enter a few times 
 	return GWSTATUS_CONTINUE_GAME;
 }
 
@@ -195,22 +168,6 @@ void StudentWorld::cleanUp()
 }
 
 
-//Level::MazeEntry StudentWorld::whatTypeIsThis(Actor* ap)
-//{
-//	if (ap == nullptr)
-//		return Level::empty;
-//	Wall* wp = dynamic_cast<Wall*>(ap);
-//	if (wp != nullptr)
-//		return Level::wall;
-//	Boulder* bp = dynamic_cast<Boulder*>(ap);
-//	if (bp != nullptr)
-//		return Level::boulder;
-//	Hole* hp = dynamic_cast<Hole*>(ap);
-//	if (hp != nullptr)
-//		return Level::hole;
-//	//ADD MORE HERE AS YOU ADD ACTORS
-//}
-
 void StudentWorld::removeDeadActors()
 {
 	for (auto ap = m_ActorList.begin(); ap != m_ActorList.end(); ap++)
@@ -223,5 +180,42 @@ void StudentWorld::removeDeadActors()
 		}
 
 	}
+}
+
+void StudentWorld::ShootBullet(int x, int y, GraphObject::Direction dir)
+{
+	//The actor that shoots the bullet will pass its current Coordinates and direction
+	//We will deal with which coordinate the bullet will spawn on based on these parameters
+	switch (dir)
+	{
+	case GraphObject::up:
+		m_ActorList.push_back(new Bullet(x, y + 1, this, dir));
+		break;
+	case GraphObject::right:
+		m_ActorList.push_back(new Bullet(x + 1, y, this, dir));
+		break;
+	case GraphObject::down:
+		m_ActorList.push_back(new Bullet(x, y - 1, this, dir));
+		break;
+	case GraphObject::left:
+		m_ActorList.push_back(new Bullet(x - 1, y, this, dir));
+		break;
+	}
+}
+
+Actor* StudentWorld::FindNOTBullet(int x, int y)
+{
+	for (auto ap : m_ActorList)
+	{
+		if (ap->getX() == x && ap->getY() == y)
+		{
+			Bullet* bp = dynamic_cast<Bullet*>(ap);
+			if (bp != nullptr)
+				continue;
+			else
+				return ap;
+		}
+	}
+	return nullptr;
 }
 // Students:  Add code to this file (if you wish), StudentWorld.h, Actor.h and Actor.cpp

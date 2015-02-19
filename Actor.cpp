@@ -116,7 +116,12 @@ void Player::doSomething()
 			}
 			break;
 		case KEY_PRESS_SPACE:
-			//bullet stuff
+			if (m_ammunition > 0)
+			{
+				getWorld()->ShootBullet(getX(), getY(), getDirection());
+				getWorld()->playSound(SOUND_PLAYER_FIRE);
+				m_ammunition--;
+			}
 			break;
 		case KEY_PRESS_ESCAPE:
 			getWorld()->decLives();
@@ -156,17 +161,6 @@ bool Boulder::push(Direction dir)
 
 		//return false to notify the player that the boulder could not be pushed
 		return false;
-			
-			
-			
-			
-			/*(getWorld()->whatTypeIsThis(ap) == Level::empty
-			|| getWorld()->whatTypeIsThis(ap) == Level::hole)
-		{
-			moveTo(getX(), getY() + 1);
-			return true;
-		}
-		return false;*/
 	}
 	else if (dir == right)
 	{
@@ -300,3 +294,112 @@ void RestoreHealthGoodie::doSomething()
 		getWorld()->player()->setHitpoints(20);
 	}
 }
+
+void Bullet::move(Direction dir)
+{
+	switch (dir)
+	{
+	case up:
+		moveTo(getX(), getY() + 1);
+		break;
+	case right:
+		moveTo(getX() + 1, getY());
+		break;
+	case down:
+		moveTo(getX(), getY() - 1);
+		break;
+	case left:
+		moveTo(getX() - 1, getY());
+		break;
+	}
+}
+
+//void Buller::checkCurrentCoordinates()
+void Bullet::doSomething()
+{
+	if (!m_justSpawned)
+	{
+		if (!isAlive())  //if the bullet is dead, we dont want to do anything
+			return;
+
+		if ((getWorld()->player()->getX() == getX()			//Check if the bullet is on top
+			&& getWorld()->player()->getY() == getY()))		//of the player.
+		{
+			getWorld()->player()->Hurt();
+			setDead();
+			return;
+		}
+
+		//Find an actor at the bullet's coordinates
+		Actor* ap = getWorld()->FindNOTBullet(getX(), getY());
+
+		if (ap != nullptr)
+		{
+			//Check if the bullet is on top of an actor that it can hurt
+			//and act accordingly
+			HealthActor* hap = dynamic_cast<HealthActor*>(ap);
+
+			if (hap != nullptr)
+			{
+				hap->Hurt();
+				setDead();
+				return;
+			}
+
+			//check if the bullet is on top of an actor that it cannot hurt
+			//and act accordingly
+			Wall* wp = dynamic_cast<Wall*>(ap);
+
+			if (wp != nullptr)
+			{
+				setDead();
+				return;
+			}
+
+			//TODO: add checks for Actors that a bullet can be on top of
+		}
+
+
+		//At this point, we know the bullet should move past whatever actor it is on top of
+		move(getDirection());
+	}
+	m_justSpawned = false;
+	//Repeat the same algorithm as above to test whether the bullet should stay alive
+	//at its new coordinates
+
+	if ((getWorld()->player()->getX() == getX()			//Check if the bullet is on top
+		&& getWorld()->player()->getY() == getY()))		//of the player.
+	{
+		getWorld()->player()->Hurt();
+		setDead();
+		return;
+	}
+
+	//Find an actor at the bullet's coordinates
+	Actor* ap = getWorld()->FindNOTBullet(getX(), getY());
+
+
+	if (ap != nullptr)
+	{
+		//Check again if the bullet is on top of an actor it can hurt
+		HealthActor* hap = dynamic_cast<HealthActor*>(ap);
+
+		if (hap != nullptr)
+		{
+			hap->Hurt();
+			setDead();
+			return;
+		}
+
+		//check if the bullet is on top of an actor it cant hurt
+		Wall* wp = dynamic_cast<Wall*>(ap);
+
+		if (wp != nullptr)
+		{
+			setDead();
+			return;
+		}
+		//TODO: add checks for Actors that a bullet can be on top of
+	}
+}
+		

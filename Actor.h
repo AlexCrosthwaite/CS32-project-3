@@ -60,7 +60,6 @@ private:
 };
 
 
-
 //////////////////////
 //   HEALTH ACTOR   //
 //////////////////////
@@ -77,9 +76,13 @@ public:
 	{
 	}
 
-	virtual void getAttacked()
+	virtual void Hurt()
 	{
-
+		m_hitpoints -= 2;
+		if (m_hitpoints <= 0)
+		{
+			setDead();
+		}
 	}
 	void setHitpoints(int hitpoints)
 	{
@@ -94,6 +97,15 @@ private:
 	int m_hitpoints;
 };
 
+
+/////////////////
+//   SHOOTER   //
+/////////////////
+
+class Shooter : public HealthActor
+{
+
+};
 
 
 ////////////////
@@ -149,9 +161,6 @@ public:
 		setHitpoints(10);
 	}
 
-	void getAttacked()
-	{
-	}
 
 	bool push(Direction dir);
 
@@ -236,6 +245,7 @@ private:
 
 };
 
+
 ///////////////
 //   JEWEL   //
 ///////////////
@@ -251,6 +261,7 @@ public:
 
 private:
 };
+
 
 ////////////////////
 //   EXTRA LIFE   //
@@ -303,6 +314,24 @@ private:
 };
 
 
+////////////////
+//   BULLET   //
+////////////////
+class Bullet : public Actor
+{
+public:
+	Bullet(int startX, int startY, StudentWorld* studentWorld, Direction dir)
+	: Actor(IID_BULLET, startX, startY, studentWorld, dir)
+	{
+		m_justSpawned = true;
+	}
 
+	void doSomething();
+
+	void move(Direction dir);
+	
+private:
+	bool m_justSpawned;
+};
 
 #endif // ACTOR_H_
