@@ -18,15 +18,11 @@ public:
 	{
 	}
 
+
+	
 	~StudentWorld()
 	{
-		delete m_player;
-		auto ap = m_ActorList.begin();
-		while (ap != m_ActorList.end())
-		{
-			delete *ap;
-			ap = m_ActorList.erase(ap);
-		}
+		cleanUp();
 	}
 	virtual int init();
 	virtual int move();
@@ -37,6 +33,7 @@ public:
 		return m_player;
 	}
 	
+	//Use this function to find an actor with specific x and y coordinates
 	Actor* getActor(int x, int y)
 	{
 		for (auto ap : m_ActorList)
@@ -47,6 +44,7 @@ public:
 		return nullptr;
 	}
 
+	//Use this function when you want to find a specific type, not just a generic actor
 	Boulder* findBoulder(int x, int y)
 	{
 		for (auto ap : m_ActorList)
@@ -63,32 +61,26 @@ public:
 		return nullptr;
 	}
 
-	/*void setEmpty(int x, int y)
-	{
-		m_maze[x][y] = Level::empty;
-	}
-
-	void setFilled(int x, int y, Level::MazeEntry me)
-	{
-		m_maze[x][y] = me;
-	}*/
-
 	unsigned int getBonus()
 	{
 		return m_bonus;
 	}
 
+	//Decrement the bonus during a tick
 	void decBonus()
 	{
 		if (m_bonus > 0)
 		m_bonus--;
 	}
 
-	Level::MazeEntry whatTypeIsThis(Actor* ap);
+	//Level::MazeEntry whatTypeIsThis(Actor* ap);
 
 	void removeDeadActors();
 
+	//loads the current level data into our ActorList
 	int loadAlevel();
+
+	//sets the display text at the top of the screen 
 	void setDisplayText();
 
 private:

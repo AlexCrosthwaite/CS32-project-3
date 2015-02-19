@@ -104,7 +104,7 @@ void Player::doSomething()
 			{
 				Boulder* bp = dynamic_cast<Boulder*> (ap);
 
-				if (bp == nullptr) // Here, we know the player can walk directly onto the other actor.
+				if (bp == nullptr) //Here, we know the player can walk directly onto the other actor.
 				{				   //We know if this check fails, then the player tried to walk onto a boulder
 					moveTo(getX(), getY() + 1);
 				}
@@ -130,8 +130,12 @@ bool Boulder::push(Direction dir)
 {
 	if (dir == up)
 	{
+		//find an Actor at the coordinates we are trying to push to
 		Actor* ap = getWorld()->getActor(getX(), getY() + 1);
 
+		//If we didnt find an actor, then the space is empty
+		//and we can just move the boulder. Return true to notify the 
+		//player that the boulder was pushed
 		if (ap == nullptr)
 		{
 			moveTo(getX(), getY() + 1);
@@ -139,13 +143,18 @@ bool Boulder::push(Direction dir)
 		}
 		else
 		{
+			//if we found an actor on the coordinates, check if it is a hole
 			Hole* hp = dynamic_cast<Hole*>(ap);
 			if (hp)
 			{
+				//if the actor at the push coordinates is a hole, then we are allowed
+				//to push the boulder on top of the hole. Again, return true to notify the player
 				moveTo(getX(), getY() + 1);
 				return true;
 			}
 		}
+
+		//return false to notify the player that the boulder could not be pushed
 		return false;
 			
 			
@@ -222,13 +231,16 @@ bool Boulder::push(Direction dir)
 }
 void Hole::doSomething()
 {
+	//If the hole is dead, clearly we dont want to do anything
 	if (!isAlive())
 		return;
 
+	//look for a boulder on top of the hole
 	Boulder* bp = getWorld()->findBoulder(getX(), getY());
 
 	if (bp != nullptr)
 	{
+		//If we found a boulder, kill the hole and the boulder
 		setDead();
 		bp->setDead();
 	}
@@ -240,13 +252,51 @@ bool Goodie::doSomethingGoodie()
 		return false;
 	else
 	{
+		//Check if the player is on top of the goodie
 		if (getWorld()->player()->getX() == getX()
 			&& getWorld()->player()->getY() == getY())
 		{
+			//If the player is ontop of the goodie, kill the goodie and play the correct sound
 			setDead();
 			getWorld()->playSound(SOUND_GOT_GOODIE);
 			return true;
 		}
+		return false;
+	}
+}
 
+
+void Jewel::doSomething()
+{
+	if (doSomethingGoodie()) //The player got the goodie
+	{
+		getWorld()->increaseScore(50);
+	}
+}
+
+void ExtraLifeGoodie::doSomething()
+{
+	if (doSomethingGoodie()) //The player got the goodie
+	{
+		getWorld()->incLives();
+		getWorld()->increaseScore(1000);
+	}
+}
+
+void AmmoGoodie::doSomething()
+{
+	if (doSomethingGoodie()) //The player got the goodie
+	{
+		getWorld()->increaseScore(100);
+		getWorld()->player()->addAmmo();
+	}
+}
+
+void RestoreHealthGoodie::doSomething()
+{
+	if (doSomethingGoodie()) //The player got the goodie
+	{
+		getWorld()->increaseScore(500);
+		getWorld()->player()->setHitpoints(20);
 	}
 }

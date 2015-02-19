@@ -10,6 +10,10 @@ class StudentWorld;
 
 // Students:  Add code to this file, Actor.cpp, StudentWorld.h, and StudentWorld.cpp
 
+
+///////////////
+//   ACTOR   //
+///////////////
 class Actor : public GraphObject
 {
 public:
@@ -56,6 +60,10 @@ private:
 };
 
 
+
+//////////////////////
+//   HEALTH ACTOR   //
+//////////////////////
 class HealthActor : public Actor
 {
 public:
@@ -86,6 +94,11 @@ private:
 	int m_hitpoints;
 };
 
+
+
+////////////////
+//   PLAYER   //
+////////////////
 class Player : public HealthActor
 {
 public:
@@ -108,6 +121,11 @@ public:
 		return m_ammunition;
 	}
 
+	void addAmmo()
+	{
+		m_ammunition += 20;
+	}
+
 	bool blocksPlayer()
 	{
 		return false;
@@ -118,6 +136,10 @@ private:
 
 };
 
+
+/////////////////
+//   BOULDER   //
+/////////////////
 class Boulder : public HealthActor
 {
 public:
@@ -133,10 +155,6 @@ public:
 
 	bool push(Direction dir);
 
-	void doSomething()
-	{
-		//do nothing
-	}
 
 	bool blocksPlayer()
 	{
@@ -147,6 +165,11 @@ private:
 
 
 };
+
+
+//////////////
+//   WALL   //
+//////////////
 class Wall : public Actor
 {
 public:
@@ -164,6 +187,10 @@ private:
 
 };
 
+
+//////////////
+//   HOLE   //
+//////////////
 class Hole : public Actor
 {
 public:
@@ -182,6 +209,10 @@ private:
 
 };
 
+
+////////////////
+//   GOODIE   //
+////////////////
 class Goodie : public Actor
 {
 public:
@@ -194,10 +225,81 @@ public:
 	{
 	}
 
-	bool doSomethingGoodie();
+	virtual bool blocksPlayer()
+	{
+		return false;
+	}
+
+	virtual bool doSomethingGoodie(); //This funtion will be used by all derived goodies
 
 private:
 
+};
+
+///////////////
+//   JEWEL   //
+///////////////
+class Jewel : public Goodie
+{
+public:
+	Jewel(int startX, int startY, StudentWorld* studentworld)
+		: Goodie(IID_JEWEL, startX, startY, studentworld)
+	{
+	}
+
+	void doSomething();
+
+private:
+};
+
+////////////////////
+//   EXTRA LIFE   //
+////////////////////
+class ExtraLifeGoodie : public Goodie
+{
+public:
+	ExtraLifeGoodie(int startX, int startY, StudentWorld* studentworld)
+		: Goodie(IID_EXTRA_LIFE, startX, startY, studentworld)
+	{
+	}
+
+	void doSomething();
+
+private:
+};
+
+
+//////////////
+//   AMMO   //
+//////////////
+class AmmoGoodie : public Goodie
+{
+public:
+	AmmoGoodie(int startX, int startY, StudentWorld* studentworld)
+		: Goodie(IID_AMMO, startX, startY, studentworld)
+	{
+	}
+
+	void doSomething();
+
+private:
+};
+
+
+////////////////////////
+//   RESTORE HEALTH   //
+////////////////////////
+class RestoreHealthGoodie : public Goodie
+{
+public:
+	RestoreHealthGoodie(int startX, int startY, StudentWorld* studentworld)
+		: Goodie(IID_RESTORE_HEALTH, startX, startY, studentworld)
+	{
+	}
+
+	void doSomething();
+
+private:
 };
 
 

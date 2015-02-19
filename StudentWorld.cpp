@@ -27,9 +27,9 @@ int StudentWorld::loadAlevel()
 	Level::LoadResult result = lev.loadLevel(levelFile);
 
 	if (result == Level::load_fail_file_not_found)
-		cout << "Could not find file\n";
+		cerr << "Could not find file\n";
 	else if (result == Level::load_fail_bad_format)
-		cout << "Level was improperly formatted\n";
+		cerr << "Level was improperly formatted\n";
 	else if (result == Level::load_success)
 	{
 		for (int i = 0; i < VIEW_WIDTH; i++)
@@ -50,6 +50,18 @@ int StudentWorld::loadAlevel()
 					break;
 				case Level::hole:
 					m_ActorList.push_back(new Hole(i, j, this));
+					break;
+				case Level::jewel:
+					m_ActorList.push_back(new Jewel(i, j, this));
+					break;
+				case Level::extra_life:
+					m_ActorList.push_back(new ExtraLifeGoodie(i, j, this));
+					break;
+				case Level::ammo:
+					m_ActorList.push_back(new AmmoGoodie(i, j, this));
+					break;
+				case Level::restore_health:
+					m_ActorList.push_back(new RestoreHealthGoodie(i, j, this));
 					break;
 				}
 				/*if (item == Level::wall || item == Level::player)
@@ -172,6 +184,7 @@ int StudentWorld::move()
 
 void StudentWorld::cleanUp()
 {
+	//delete all the actor pointers in the actor list
 	delete m_player;
 	auto ap = m_ActorList.begin();
 	while (ap != m_ActorList.end())
@@ -182,27 +195,27 @@ void StudentWorld::cleanUp()
 }
 
 
-Level::MazeEntry StudentWorld::whatTypeIsThis(Actor* ap)
-{
-	if (ap == nullptr)
-		return Level::empty;
-	Wall* wp = dynamic_cast<Wall*>(ap);
-	if (wp != nullptr)
-		return Level::wall;
-	Boulder* bp = dynamic_cast<Boulder*>(ap);
-	if (bp != nullptr)
-		return Level::boulder;
-	Hole* hp = dynamic_cast<Hole*>(ap);
-	if (hp != nullptr)
-		return Level::hole;
-	//ADD MORE HERE AS YOU ADD ACTORS
-}
+//Level::MazeEntry StudentWorld::whatTypeIsThis(Actor* ap)
+//{
+//	if (ap == nullptr)
+//		return Level::empty;
+//	Wall* wp = dynamic_cast<Wall*>(ap);
+//	if (wp != nullptr)
+//		return Level::wall;
+//	Boulder* bp = dynamic_cast<Boulder*>(ap);
+//	if (bp != nullptr)
+//		return Level::boulder;
+//	Hole* hp = dynamic_cast<Hole*>(ap);
+//	if (hp != nullptr)
+//		return Level::hole;
+//	//ADD MORE HERE AS YOU ADD ACTORS
+//}
 
 void StudentWorld::removeDeadActors()
 {
 	for (auto ap = m_ActorList.begin(); ap != m_ActorList.end(); ap++)
 	{
-		if (!((*ap)->isAlive()))
+		if (!(*ap)->isAlive())//If an actor is not alive, then we want to remove it
 		{
 			delete (*ap);
 			ap = m_ActorList.erase(ap);
