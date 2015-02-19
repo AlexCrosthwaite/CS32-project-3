@@ -334,4 +334,6 @@ private:
 	bool m_justSpawned;
 };
 
+//TODO: implement the Exit class and functionality with jewels
+
 #endif // ACTOR_H_
