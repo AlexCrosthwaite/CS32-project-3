@@ -265,6 +265,7 @@ void Jewel::doSomething()
 	if (doSomethingGoodie()) //The player got the goodie
 	{
 		getWorld()->increaseScore(50);
+		getWorld()->getJewel();
 	}
 }
 
@@ -400,6 +401,29 @@ void Bullet::doSomething()
 			return;
 		}
 		//TODO: add checks for Actors that a bullet can be on top of
+	}
+}
+
+void Exit::doSomething()
+{
+	if (m_isVisible)
+	{
+		if (getWorld()->player()->getX() == getX() && getWorld()->player()->getY() == getY())
+		{
+			setDead();
+			getWorld()->increaseScore(2000);
+			getWorld()->playSound(SOUND_FINISHED_LEVEL);
+			getWorld()->completeLevel();
+		}
+	}
+	else
+	{
+		if (!(getWorld()->jewelsLeft()))
+		{
+			getWorld()->playSound(SOUND_REVEAL_EXIT);
+			m_isVisible = true;
+			setVisible(true);
+		}
 	}
 }
 		

@@ -210,10 +210,6 @@ public:
 	
 	void doSomething();
 
-	bool blocksPlayer()
-	{
-		return true;
-	}
 private:
 
 };
@@ -332,6 +328,31 @@ public:
 	
 private:
 	bool m_justSpawned;
+};
+
+//////////////
+//   EXIT   //
+//////////////
+class Exit : public Actor
+{
+public:
+	Exit(int startX, int startY, StudentWorld* studentWorld)
+	: Actor(IID_EXIT, startX, startY, studentWorld)
+	{
+		setVisible(false);
+		m_isVisible = false;
+	}
+
+	void doSomething();
+
+	bool blocksPlayer()
+	{
+		return false;
+	}
+
+private:
+	bool m_isVisible;
+
 };
 
 //TODO: implement the Exit class and functionality with jewels

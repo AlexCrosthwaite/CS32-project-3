@@ -16,6 +16,8 @@ public:
 	StudentWorld(std::string assetDir)
 	 : GameWorld(assetDir)
 	{
+		m_levelComplete = false;
+		m_jewels = 0;
 	}
 
 
@@ -39,7 +41,11 @@ public:
 		for (auto ap : m_ActorList)
 		{
 			if (ap->getX() == x && ap->getY() == y)
-				return ap;
+			{
+				if (ap->isAlive())
+				{
+					return ap;
+				}
 		}
 		return nullptr;
 	}
@@ -51,10 +57,13 @@ public:
 		{
 			if (ap->getX() == x && ap->getY() == y)
 			{
-				Boulder* bp = dynamic_cast<Boulder*>(ap);
-				if (bp != nullptr)
+				if (ap->isAlive())
 				{
-					return bp;
+					Boulder* bp = dynamic_cast<Boulder*>(ap);
+					if (bp != nullptr)
+					{
+						return bp;
+					}
 				}
 			}
 		}
@@ -73,6 +82,20 @@ public:
 		m_bonus--;
 	}
 
+	void completeLevel()
+	{
+		m_levelComplete = true;
+	}
+
+	void getJewel()
+	{
+		m_jewels--;
+	}
+
+	bool jewelsLeft()
+	{
+		return m_jewels > 0;
+	}
 	//Level::MazeEntry whatTypeIsThis(Actor* ap);
 
 	void removeDeadActors();
@@ -92,6 +115,8 @@ private:
 	std::list<Actor*> m_ActorList;
 	Player* m_player;
 	unsigned int m_bonus;
+	bool m_levelComplete;
+	int m_jewels;
 	
 };
 

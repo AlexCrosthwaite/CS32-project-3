@@ -28,7 +28,7 @@ int StudentWorld::loadAlevel()
 	Level::LoadResult result = lev.loadLevel(levelFile);
 
 	if (result == Level::load_fail_file_not_found)
-		cerr << "Could not find file\n";
+		return Level::load_fail_file_not_found;
 	else if (result == Level::load_fail_bad_format)
 		cerr << "Level was improperly formatted\n";
 	else if (result == Level::load_success)
@@ -54,6 +54,7 @@ int StudentWorld::loadAlevel()
 					break;
 				case Level::jewel:
 					m_ActorList.push_back(new Jewel(i, j, this));
+					m_jewels++;
 					break;
 				case Level::extra_life:
 					m_ActorList.push_back(new ExtraLifeGoodie(i, j, this));
@@ -64,14 +65,10 @@ int StudentWorld::loadAlevel()
 				case Level::restore_health:
 					m_ActorList.push_back(new RestoreHealthGoodie(i, j, this));
 					break;
+				case Level::exit:
+					m_ActorList.push_back(new Exit(i, j, this));
+					break;
 				}
-				/*if (item == Level::wall || item == Level::player)
-					m_maze[j][i] = item;
-				else if (item == Level::boulder || item == Level::hole)
-					m_maze[j][i] = item;
-				else
-					m_maze[j][i] = Level::empty;*/
-			
 			}
 		}
 	}
@@ -117,6 +114,7 @@ int StudentWorld::init()
 	if (loadAlevel() == -1)
 		exit(1); //level loaded incorrectly or had bad format
 
+	m_levelComplete = false;
 	m_bonus = 1000;
 	return GWSTATUS_CONTINUE_GAME;
 }
@@ -140,6 +138,12 @@ int StudentWorld::move()
 
 			if (getLives() < livesBefore)
 				return GWSTATUS_PLAYER_DIED;
+
+			if (m_levelComplete)
+			{
+				increaseScore(getBonus());
+				return GWSTATUS_FINISHED_LEVEL;
+			}
 
 		}
 	}
