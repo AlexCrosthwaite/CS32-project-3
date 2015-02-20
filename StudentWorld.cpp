@@ -19,6 +19,7 @@ int StudentWorld::loadAlevel()
 	
 	ostringstream oss;
 	unsigned int level = getLevel();
+
 	oss.fill('0');
 	oss << "level" << setw(2) << level << ".dat";
 	string levelFile = oss.str();
@@ -28,9 +29,9 @@ int StudentWorld::loadAlevel()
 	Level::LoadResult result = lev.loadLevel(levelFile);
 
 	if (result == Level::load_fail_file_not_found)
-		return Level::load_fail_file_not_found;
+		return result;
 	else if (result == Level::load_fail_bad_format)
-		cerr << "Level was improperly formatted\n";
+		return result;
 	else if (result == Level::load_success)
 	{
 		for (int i = 0; i < VIEW_WIDTH; i++)
@@ -71,9 +72,8 @@ int StudentWorld::loadAlevel()
 				}
 			}
 		}
+		return result;
 	}
-
-	return Level::load_success;
 }
 
 void StudentWorld::setDisplayText()
@@ -111,8 +111,16 @@ void StudentWorld::setDisplayText()
 
 int StudentWorld::init()
 {
-	if (loadAlevel() == -1)
-		exit(1); //level loaded incorrectly or had bad format
+	//Check to see if we are trying to initialize level 100, in which case the player won
+	if (getLevel() == 100)
+		return GWSTATUS_PLAYER_WON;
+
+	int result = loadAlevel(); //load the next level and store the result  of the load
+
+	if (result == Level::load_fail_bad_format)
+		return GWSTATUS_LEVEL_ERROR;
+	if (result == Level::load_fail_file_not_found)
+		return GWSTATUS_PLAYER_WON;		//if we couldnt find the next level, then the player won
 
 	m_levelComplete = false;
 	m_bonus = 1000;
@@ -218,6 +226,40 @@ Actor* StudentWorld::FindNOTBullet(int x, int y)
 				continue;
 			else
 				return ap;
+		}
+	}
+	return nullptr;
+}
+
+Actor* StudentWorld::getActor(int x, int y)
+{
+	for (auto ap : m_ActorList)
+	{
+		if (ap->getX() == x && ap->getY() == y)
+		{
+			if (ap->isAlive())
+			{
+				return ap;
+			}
+		}
+	}
+	return nullptr;
+}
+
+Boulder* StudentWorld::findBoulder(int x, int y)
+{
+	for (auto ap : m_ActorList)
+	{
+		if (ap->getX() == x && ap->getY() == y)
+		{
+			if (ap->isAlive())
+			{
+				Boulder* bp = dynamic_cast<Boulder*>(ap);
+				if (bp != nullptr)
+				{
+					return bp;
+				}
+			}
 		}
 	}
 	return nullptr;

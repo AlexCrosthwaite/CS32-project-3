@@ -26,6 +26,7 @@ public:
 	{
 		cleanUp();
 	}
+
 	virtual int init();
 	virtual int move();
 	virtual void cleanUp();
@@ -36,39 +37,12 @@ public:
 	}
 	
 	//Use this function to find an actor with specific x and y coordinates
-	Actor* getActor(int x, int y)
-	{
-		for (auto ap : m_ActorList)
-		{
-			if (ap->getX() == x && ap->getY() == y)
-			{
-				if (ap->isAlive())
-				{
-					return ap;
-				}
-		}
-		return nullptr;
-	}
+	Actor* getActor(int x, int y);
+	
 
 	//Use this function when you want to find a specific type, not just a generic actor
-	Boulder* findBoulder(int x, int y)
-	{
-		for (auto ap : m_ActorList)
-		{
-			if (ap->getX() == x && ap->getY() == y)
-			{
-				if (ap->isAlive())
-				{
-					Boulder* bp = dynamic_cast<Boulder*>(ap);
-					if (bp != nullptr)
-					{
-						return bp;
-					}
-				}
-			}
-		}
-		return nullptr;
-	}
+	Boulder* findBoulder(int x, int y);
+
 
 	unsigned int getBonus()
 	{
