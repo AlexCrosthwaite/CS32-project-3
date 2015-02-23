@@ -138,7 +138,7 @@ public:
 	{
 	}
 
-	void shoot();
+	virtual void shoot();
 
 private:
 	
@@ -172,11 +172,6 @@ public:
 		m_ammunition += 20;
 	}
 
-	bool blocksPlayer()
-	{
-		return false;
-	}
-
 	void move(Direction dir);
 
 private:
@@ -194,7 +189,6 @@ public:
 	Robot(int imageID, int startX, int startY, StudentWorld* studentworld, Direction dir)
 		: Shooter(imageID, startX, startY, studentworld, dir)
 	{
-		setHitpoints(10);
 		resetTicks();
 	}
 
@@ -203,9 +197,18 @@ public:
 		return m_ticksToWait;
 	}
 
+	void wait()
+	{
+		m_ticksToWait--;
+	}
+
+	void shoot();
+
 	void resetTicks();
 	
 	bool playerVisible();
+
+	void Hurt();
 
 private:
 	int m_ticksToWait;
@@ -216,18 +219,18 @@ private:
 //////////////////
 //   SNARLBOT   //
 //////////////////
-class SnarlBot :public Shooter
+class SnarlBot :public Robot
 {
 public:
 	SnarlBot(int startX, int startY, StudentWorld* studentWorld, Direction dir)
-		: Shooter(IID_SNARLBOT, startX, startY, studentWorld, dir)
+		: Robot(IID_SNARLBOT, startX, startY, studentWorld, dir)
 	{
 		setHitpoints(10);
 	}
 
 	void doSomething();
 
-	void Hurt() {}
+private:
 
 };
 
@@ -427,6 +430,12 @@ public:
 	{
 		return false;
 	}
+
+	bool blocksPlayer()
+	{
+		return false;
+	}
+
 private:
 	bool m_justSpawned;
 };
