@@ -30,9 +30,7 @@ public:
 	{
 	}
 
-	virtual void doSomething()
-	{
-	}
+	virtual void doSomething() = 0;
 
 	StudentWorld* getWorld()
 	{
@@ -52,6 +50,34 @@ public:
 	virtual bool blocksPlayer()
 	{
 		return true;
+	}
+
+	virtual bool blocksVision()
+	{
+		return true;
+	}
+
+	void dirToDelta(Direction dir, int& dx, int& dy)
+	{
+		switch (dir)
+		{
+		case up:
+			dx = 0;
+			dy = 1;
+			break;
+		case right:
+			dx = 1;
+			dy = 0;
+			break;
+		case down:
+			dx = 0;
+			dy = -1;
+			break;
+		case left:
+			dx = -1;
+			dy = 0;
+			break;
+		}
 	}
 
 private:
@@ -84,10 +110,12 @@ public:
 			setDead();
 		}
 	}
+
 	void setHitpoints(int hitpoints)
 	{
 		m_hitpoints = hitpoints;
 	}
+
 	int getHitpoints()
 	{
 		return m_hitpoints;
@@ -104,18 +132,27 @@ private:
 
 class Shooter : public HealthActor
 {
+public: 
+	Shooter(int imageID, int startX, int startY, StudentWorld* studentWorld, Direction dir)
+		: HealthActor(imageID, startX, startY, studentWorld, dir)
+	{
+	}
 
+	void shoot();
+
+private:
+	
 };
 
 
 ////////////////
 //   PLAYER   //
 ////////////////
-class Player : public HealthActor
+class Player : public Shooter
 {
 public:
 	Player(int startX, int startY, StudentWorld* studentWorld)
-		: HealthActor(IID_PLAYER, startX, startY, studentWorld, right)
+		: Shooter(IID_PLAYER, startX, startY, studentWorld, right)
 	{	
 		setHitpoints(20);
 		m_ammunition = 20;
@@ -123,15 +160,12 @@ public:
 
 	void doSomething();
 
-	void getAttacked()
-	{
-
-	}
-
 	int getAmmunition()
 	{
 		return m_ammunition;
 	}
+
+	void Hurt();
 
 	void addAmmo()
 	{
@@ -143,8 +177,57 @@ public:
 		return false;
 	}
 
+	void move(Direction dir);
+
 private:
 	int m_ammunition;
+
+};
+
+
+///////////////
+//   ROBOT   //
+///////////////
+class Robot : public Shooter
+{
+public:
+	Robot(int imageID, int startX, int startY, StudentWorld* studentworld, Direction dir)
+		: Shooter(imageID, startX, startY, studentworld, dir)
+	{
+		setHitpoints(10);
+		resetTicks();
+	}
+
+	int ticksToWait()
+	{
+		return m_ticksToWait;
+	}
+
+	void resetTicks();
+	
+	bool playerVisible();
+
+private:
+	int m_ticksToWait;
+
+};
+
+
+//////////////////
+//   SNARLBOT   //
+//////////////////
+class SnarlBot :public Shooter
+{
+public:
+	SnarlBot(int startX, int startY, StudentWorld* studentWorld, Direction dir)
+		: Shooter(IID_SNARLBOT, startX, startY, studentWorld, dir)
+	{
+		setHitpoints(10);
+	}
+
+	void doSomething();
+
+	void Hurt() {}
 
 };
 
@@ -164,6 +247,10 @@ public:
 
 	bool push(Direction dir);
 
+	void doSomething()
+	{
+		//do nothing
+	}
 
 	bool blocksPlayer()
 	{
@@ -210,6 +297,11 @@ public:
 	
 	void doSomething();
 
+	bool blocksVision()
+	{
+		return false;
+	}
+
 private:
 
 };
@@ -231,6 +323,11 @@ public:
 	}
 
 	virtual bool blocksPlayer()
+	{
+		return false;
+	}
+
+	bool blocksVision()
 	{
 		return false;
 	}
@@ -326,6 +423,10 @@ public:
 
 	void move(Direction dir);
 	
+	bool blocksVision()
+	{
+		return false;
+	}
 private:
 	bool m_justSpawned;
 };
@@ -350,11 +451,15 @@ public:
 		return false;
 	}
 
+	bool blocksVision()
+	{
+		return false;
+	}
+
 private:
 	bool m_isVisible;
 
 };
 
-//TODO: implement the Exit class and functionality with jewels
 
 #endif // ACTOR_H_

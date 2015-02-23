@@ -118,7 +118,7 @@ void Player::doSomething()
 		case KEY_PRESS_SPACE:
 			if (m_ammunition > 0)
 			{
-				getWorld()->ShootBullet(getX(), getY(), getDirection());
+				shoot();
 				getWorld()->playSound(SOUND_PLAYER_FIRE);
 				m_ammunition--;
 			}
@@ -131,6 +131,75 @@ void Player::doSomething()
 	}
 }
 
+void Player::move(Direction dir)
+{
+	int dx;
+	int dy;
+
+	dirToDelta(dir, dx, dy);
+
+	setDirection(dir);
+
+	Actor* ap = getWorld()->getActor(getX() + dx, getY() + dy);
+
+	if (!ap) //this means the spot is empty
+	{
+		moveTo(getX() + dx, getY() + dy);
+	}
+
+	else if (!(ap->blocksPlayer()))
+	{
+		Boulder* bp = dynamic_cast<Boulder*> (ap);
+
+		if (bp == nullptr) // Here, we know the player can walk directly onto the other actor.
+		{				   //We know if this check fails, then the player tried to walk onto a boulder
+			moveTo(getX() + dx, getY() + dy);
+		}
+
+		else if (bp->push(down) == true) //check to see if we can move the boulder
+		{
+			moveTo(getX() + dx, getY() + dy);
+		}
+	}
+}
+
+void Player::Hurt()
+{
+	setHitpoints(getHitpoints() - 2);
+
+	if (getHitpoints() <= 0)
+	{
+		setDead();
+		getWorld()->playSound(SOUND_PLAYER_DIE);
+	}
+	else
+		getWorld()->playSound(SOUND_PLAYER_IMPACT);
+}
+
+void Shooter::shoot()
+{
+	getWorld()->ShootBullet(getX(), getY(), getDirection());
+}
+
+void Robot::resetTicks()
+{
+	int ticks = (28 - getWorld()->getLevel()) / 4;
+
+	if (ticks < 3)
+		m_ticksToWait = 3;
+	else
+		m_ticksToWait = ticks;
+}
+
+bool Robot::playerVisible()
+{
+	return true;
+}
+
+void SnarlBot::doSomething()
+{
+	//if (playerVisible())
+}
 bool Boulder::push(Direction dir)
 {
 	if (dir == up)
@@ -223,12 +292,10 @@ bool Boulder::push(Direction dir)
 		return false;
 	}
 }
+
+ 
 void Hole::doSomething()
 {
-	//If the hole is dead, clearly we dont want to do anything
-	if (!isAlive())
-		return;
-
 	//look for a boulder on top of the hole
 	Boulder* bp = getWorld()->findBoulder(getX(), getY());
 
@@ -242,10 +309,10 @@ void Hole::doSomething()
 
 bool Goodie::doSomethingGoodie()
 {
-	if (!isAlive())
+	/*if (!isAlive())
 		return false;
 	else
-	{
+	{*/
 		//Check if the player is on top of the goodie
 		if (getWorld()->player()->getX() == getX()
 			&& getWorld()->player()->getY() == getY())
@@ -256,7 +323,7 @@ bool Goodie::doSomethingGoodie()
 			return true;
 		}
 		return false;
-	}
+	//}
 }
 
 

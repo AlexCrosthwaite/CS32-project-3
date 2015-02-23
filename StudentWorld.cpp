@@ -69,6 +69,12 @@ int StudentWorld::loadAlevel()
 				case Level::exit:
 					m_ActorList.push_back(new Exit(i, j, this));
 					break;
+				case Level::vert_snarlbot:
+					m_ActorList.push_back(new SnarlBot(i, j, this, GraphObject::down));
+					break;
+				case Level::horiz_snarlbot:
+					m_ActorList.push_back(new SnarlBot(i, j, this, GraphObject::right));
+					break;
 				}
 			}
 		}
@@ -186,11 +192,10 @@ void StudentWorld::removeDeadActors()
 	{
 		if (!(*ap)->isAlive())//If an actor is not alive, then we want to remove it
 		{
-			delete (*ap);
+ 			delete (*ap);
 			ap = m_ActorList.erase(ap);
 			ap--;
 		}
-
 	}
 }
 
