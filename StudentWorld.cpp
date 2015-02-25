@@ -75,6 +75,12 @@ int StudentWorld::loadAlevel()
 				case Level::horiz_snarlbot:
 					m_ActorList.push_back(new SnarlBot(i, j, this, GraphObject::right));
 					break;
+				case Level::angry_kleptobot_factory:
+					m_ActorList.push_back(new Factory(i, j, this, true));
+					break;
+				case Level::kleptobot_factory:
+					m_ActorList.push_back(new Factory(i, j, this, false));
+					break;
 				}
 			}
 		}
@@ -151,7 +157,10 @@ int StudentWorld::move()
 			ap->doSomething();
 
 			if (getLives() < livesBefore)
+			{
+				increaseScore(getScore()*-1);
 				return GWSTATUS_PLAYER_DIED;
+			}
 
 			if (m_levelComplete)
 			{
@@ -188,14 +197,15 @@ void StudentWorld::cleanUp()
 
 void StudentWorld::removeDeadActors()
 {
-	for (auto ap = m_ActorList.begin(); ap != m_ActorList.end(); ap++)
+	for (auto ap = m_ActorList.begin(); ap != m_ActorList.end();)
 	{
 		if (!(*ap)->isAlive())//If an actor is not alive, then we want to remove it
 		{
- 			delete (*ap);
+			delete (*ap);
 			ap = m_ActorList.erase(ap);
-			ap--;
 		}
+		else
+			ap++;
 	}
 }
 

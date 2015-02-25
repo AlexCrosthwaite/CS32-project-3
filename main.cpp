@@ -15,7 +15,7 @@ const string assetDirectory = "Assets";
 
 class GameWorld;
 
-GameWorld* createStudentWorld(string assetDir = "C:/Users/Alex/Desktop/CS32-project-3");
+GameWorld* createStudentWorld(string assetDir = "C:/Users/Alex/Desktop/CS32-project-3/Assets");
 
 int main(int argc, char* argv[])
 {

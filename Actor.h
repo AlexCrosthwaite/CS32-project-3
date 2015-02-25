@@ -52,6 +52,19 @@ public:
 		return true;
 	}
 
+	virtual bool blocksBullet()
+	{
+		return false;
+	}
+
+
+	//If something blocks a player, it blocks a robot
+	//except for boulders, which we will redfine in the boulder class
+	virtual bool blocksRobot()
+	{
+		return blocksPlayer();
+	}
+
 	virtual bool blocksVision()
 	{
 		return true;
@@ -102,14 +115,23 @@ public:
 	{
 	}
 
-	virtual void Hurt()
+	void Hurt()
 	{
 		m_hitpoints -= 2;
 		if (m_hitpoints <= 0)
 		{
 			setDead();
+			die();
+		}
+		else
+		{
+			getHit();
 		}
 	}
+
+	virtual void die() = 0;
+
+	virtual void getHit() = 0;
 
 	void setHitpoints(int hitpoints)
 	{
@@ -129,7 +151,6 @@ private:
 /////////////////
 //   SHOOTER   //
 /////////////////
-
 class Shooter : public HealthActor
 {
 public: 
@@ -138,7 +159,7 @@ public:
 	{
 	}
 
-	virtual void shoot();
+	void shoot();
 
 private:
 	
@@ -165,7 +186,9 @@ public:
 		return m_ammunition;
 	}
 
-	void Hurt();
+	virtual void die();
+
+	virtual void getHit();
 
 	void addAmmo()
 	{
@@ -202,13 +225,11 @@ public:
 		m_ticksToWait--;
 	}
 
-	void shoot();
-
 	void resetTicks();
-	
-	bool playerVisible();
 
-	void Hurt();
+	virtual void getHit();
+
+	bool playerVisible();
 
 private:
 	int m_ticksToWait;
@@ -219,7 +240,7 @@ private:
 //////////////////
 //   SNARLBOT   //
 //////////////////
-class SnarlBot :public Robot
+class SnarlBot : public Robot
 {
 public:
 	SnarlBot(int startX, int startY, StudentWorld* studentWorld, Direction dir)
@@ -228,10 +249,54 @@ public:
 		setHitpoints(10);
 	}
 
-	void doSomething();
+	virtual void doSomething();
+
+	void reverseDirection(Direction dir);
+
+	void move(Direction dir);
+
+	virtual void die();
 
 private:
 
+};
+
+
+///////////////////
+//   KLEPTOBOT   //
+///////////////////
+class KleptoBot : public Robot
+{
+public:
+	KleptoBot(int startX, int startY, StudentWorld* studentWorld, Direction dir)
+	: Robot(IID_KLEPTOBOT, startX, startY, studentWorld, right)
+	{
+		setHitpoints(5);
+		m_goodie = nullptr;
+		newDistance();
+	}
+
+	void doSomething();
+
+	bool holdingGoodie()
+	{
+		return m_goodie != nullptr;
+	}
+
+	void move(Direction dir);
+
+	virtual void die();
+
+	void newDistance()
+	{
+		m_distanceBeforeTurning = rand() % 5 + 1;
+	}
+
+	void newDirection();
+
+private:
+	int m_distanceBeforeTurning;
+	Actor* m_goodie;
 };
 
 
@@ -255,14 +320,56 @@ public:
 		//do nothing
 	}
 
+	virtual void die()
+	{
+		//do nothing
+	}
+
+	virtual void getHit()
+	{
+		//do nothing
+	}
+
 	bool blocksPlayer()
 	{
 		return false;
 	}
 
+	virtual bool blocksRobot()
+	{
+		return true;
+	}
+
 private:
 
+};
 
+
+/////////////////
+//   FACTORY   //
+/////////////////
+class Factory : public Actor
+{
+public:
+	Factory(int startX, int startY, StudentWorld* studentWorld, bool makesAngry)
+		: Actor(IID_ROBOT_FACTORY, startX, startY, studentWorld)
+	{
+		m_makesAngry = makesAngry;
+	}
+
+	void doSomething();
+
+	bool blocksBullet()
+	{
+		return true;
+	}
+
+	int countKleptoBots();
+
+	void createKleptoBot();
+
+private:
+	bool m_makesAngry;
 };
 
 
@@ -282,6 +389,11 @@ public:
 		//do nothing
 	}
 
+	bool blocksBullet()
+	{
+		return true;
+	}
+
 private:
 
 };
@@ -298,7 +410,7 @@ public:
 	{
 	}
 	
-	void doSomething();
+	virtual void doSomething();
 
 	bool blocksVision()
 	{
@@ -335,7 +447,9 @@ public:
 		return false;
 	}
 
-	virtual bool doSomethingGoodie(); //This funtion will be used by all derived goodies
+	virtual void rewardPlayer() = 0;
+
+	virtual void doSomething();
 
 private:
 
@@ -353,9 +467,10 @@ public:
 	{
 	}
 
-	void doSomething();
+	virtual void rewardPlayer();
 
 private:
+
 };
 
 
@@ -370,9 +485,10 @@ public:
 	{
 	}
 
-	void doSomething();
+	virtual void rewardPlayer();
 
 private:
+
 };
 
 
@@ -387,9 +503,10 @@ public:
 	{
 	}
 
-	void doSomething();
+	virtual void rewardPlayer();
 
 private:
+
 };
 
 
@@ -404,9 +521,10 @@ public:
 	{
 	}
 
-	void doSomething();
+	virtual void rewardPlayer();
 
 private:
+
 };
 
 
@@ -440,6 +558,7 @@ private:
 	bool m_justSpawned;
 };
 
+
 //////////////
 //   EXIT   //
 //////////////
@@ -451,6 +570,17 @@ public:
 	{
 		setVisible(false);
 		m_isVisible = false;
+	}
+
+	void makeVisible()
+	{
+		setVisible(true);
+		m_isVisible = true;
+	}
+
+	bool visible()
+	{
+		return m_isVisible;
 	}
 
 	void doSomething();

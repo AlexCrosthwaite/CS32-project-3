@@ -1,9 +1,17 @@
 #include "Actor.h"
 #include "StudentWorld.h"
 #include "GraphObject.h"
+#include <cstdlib>
+#include <vector>
+
+using namespace std;
 
 // Students:  Add code to this file (if you wish), Actor.h, StudentWorld.h, and StudentWorld.cpp
 
+
+/////////////////////////////////
+//   PLAYER  IMPLEMENTATIONS   //
+/////////////////////////////////
 void Player::doSomething()
 {
 	int key;
@@ -72,30 +80,30 @@ void Player::move(Direction dir)
 	}
 }
 
-void Player::Hurt()
+void Player::die()
 {
-	setHitpoints(getHitpoints() - 2);
-
-	if (getHitpoints() <= 0)
-	{
-		setDead();
-		getWorld()->playSound(SOUND_PLAYER_DIE);
-	}
-	else
-		getWorld()->playSound(SOUND_PLAYER_IMPACT);
+	getWorld()->decLives();
+	getWorld()->playSound(SOUND_PLAYER_DIE);
 }
 
+void Player::getHit()
+{
+	getWorld()->playSound(SOUND_PLAYER_IMPACT);
+}
+
+
+/////////////////////////////////
+//   SHOOTER IMPLEMENTATIONS   //
+/////////////////////////////////
 void Shooter::shoot()
 {
 	getWorld()->ShootBullet(getX(), getY(), getDirection());
 }
 
-void Robot::shoot()
-{
-	getWorld()->ShootBullet(getX(), getY(), getDirection());
-	getWorld()->playSound(SOUND_ENEMY_FIRE);
-}
 
+///////////////////////////////
+//   ROBOT IMPLEMENTATIONS   //
+///////////////////////////////
 void Robot::resetTicks()
 {
 	int ticks = (28 - getWorld()->getLevel()) / 4;
@@ -106,17 +114,15 @@ void Robot::resetTicks()
 		m_ticksToWait = ticks;
 }
 
-void Robot::Hurt()
+void Robot::getHit()
 {
-	setHitpoints(getHitpoints() - 2);
+	getWorld()->playSound(SOUND_ROBOT_IMPACT);
+}
 
-	if (getHitpoints() <= 0)
-	{
-		setDead();
-		getWorld()->playSound(SOUND_ROBOT_DIE);
-	}
-	else
-		getWorld()->playSound(SOUND_ROBOT_IMPACT);
+void SnarlBot::die()
+{
+	getWorld()->increaseScore(100);
+	getWorld()->playSound(SOUND_ROBOT_DIE);
 }
 
 bool Robot::playerVisible()
@@ -124,123 +130,266 @@ bool Robot::playerVisible()
 	int dx;
 	int dy;
 	dirToDelta(getDirection(), dx, dy);
-
-	return true;
+	for (int i = 1;; i++)
+	{
+		if (getWorld()->player()->getX() == getX() + i*dx && getWorld()->player()->getY() == getY() + i*dy)
+			return true;
+		Actor* ap = getWorld()->getActor(getX() + i*dx, getY() + i*dy);
+		if (ap == nullptr)
+			continue;
+		else if (ap->blocksVision())
+			return false;
+	}
 }
 
+
+//////////////////////////////////
+//   SNARLBOT IMPLEMENTATIONS   //
+//////////////////////////////////
 void SnarlBot::doSomething()
 {
+	if (!isAlive())		//if the robot is dead, we dont want to do something
+		return;
+	if (ticksToWait() > 1)		//If the snarlbot is not allowed to move this tick
+	{							// then we dont want to do anything
+		wait();		
+		return;
+	}
+	else
+	{
+		resetTicks();			//the snarlbot performed an action, so reset to tick counter
+		if (playerVisible())	
+		{						//If the snarlbot can see the player, then we want to shoot
+			shoot();
+			getWorld()->playSound(SOUND_ENEMY_FIRE);
+		}
+		else
+		{
+			move(getDirection());	//Otherwise, the snarlbot should move
+		}
+	}
+}
+
+void SnarlBot::move(Direction dir)
+{
+	int dx;
+	int dy;
+
+	dirToDelta(dir, dx, dy);
+
+	Actor* ap = getWorld()->FindNOTBullet(getX() + dx, getY() + dy);
+
+	
+	if (ap != nullptr && ap->blocksRobot()) //anything that blocks a player blocks a robot as well
+	{
+		reverseDirection(dir); //If the snarlbot cant move, reverse its direction
+	}
+	else
+	{		//if the snarlbot is not blocked, then it can (and should) move
+		moveTo(getX() + dx, getY() + dy);
+	}
+}
+
+void SnarlBot::reverseDirection(Direction dir)
+{
+	switch (dir)
+	{
+	case up:
+		setDirection(down);
+		break;
+	case right:
+		setDirection(left);
+		break;
+	case down:
+		setDirection(up);
+		break;
+	case left:
+		setDirection(right);
+		break;
+	}
+}
+
+
+///////////////////////////////////
+//   KLEPTOBOT IMPLEMENTATIONS   //
+///////////////////////////////////
+void KleptoBot::doSomething()
+{
+	if (!isAlive())
+		return;
 	if (ticksToWait() > 1)
 	{
 		wait();
 		return;
 	}
-	else
+	if (!holdingGoodie())
 	{
-		if (playerVisible())
+		Actor* ap = getWorld()->FindNOTBullet(getX(), getY());
+		if (ap == nullptr)
+			return;
+		Goodie* gp = dynamic_cast<Goodie*>(ap);
+		
+		if (gp != nullptr)
 		{
-			shoot();
+			int chanceToPickup = rand() % 10;
+			if (chanceToPickup == 0) //just choose one of the 10 options for when a goodie should be picked up
+			{
+				m_goodie = gp;
+				gp->setVisible(false);
+				getWorld()->playSound(SOUND_ROBOT_MUNCH);
+			}
 		}
-		resetTicks();
+		return;
 	}
+	
+	if (m_distanceBeforeTurning > 0)
+	{
+		int dx;
+		int dy;
+
+		dirToDelta(getDirection(), dx, dy);
+
+		Actor* ap = getWorld()->FindNOTBullet(getX() + dx, getY() + dy);
+
+
+		if (ap != nullptr && ap->blocksRobot()) //anything that blocks a player blocks a robot as well
+		{
+			m_distanceBeforeTurning = 0; //if the kleptobot can't move, it needs to turn on the next tick
+		}
+		else
+		{		//if the snarlbot is not blocked, then it can (and should) move
+			moveTo(getX() + dx, getY() + dy);
+			if (holdingGoodie()) //move the goodie with the kleptobot as well
+			{
+				m_goodie->moveTo(getX() + dx, getY() + dy);
+			}
+			m_distanceBeforeTurning--;
+		}
+		return;
+	}
+
+	//Here, the KleptoBot must choose a new direction to face, since it is supposed to turn
+	
+	//Also, we must set distanceBeforeTurning again
+	newDistance();
+	
+	newDirection();
 }
 
+void KleptoBot::newDirection()
+{
+	Direction da[4] = { up, right, down, left };
+
+	int directionsLeft = 4;
+
+	Direction firstChosen;
+
+	bool started = false;
+
+	
+	while (directionsLeft > 0)
+	{
+		int i = rand() % directionsLeft; //Pick a direction
+		
+		Direction dir = da[i]; 
+		if (!started)
+		{
+			firstChosen = dir;
+			started = true;
+		}
+		
+		int dx;
+		int dy;
+
+		dirToDelta(dir, dx, dy);
+
+		Actor* ap = getWorld()->FindNOTBullet(getX() + dx, getY() + dy);
+
+		if (ap == nullptr || !ap->blocksRobot())
+		{
+			if (holdingGoodie())
+			{
+				m_goodie->moveTo(getX() + dx, getY() + dy); //move the goodie with the KleptoBot
+			}
+			setDirection(dir);
+			moveTo(getX() + dx, getY() + dy);
+			return;
+		}
+		else
+		{
+			da[i] = da[directionsLeft - 1];
+			directionsLeft--;
+		}
+	}
+
+	//At this point, we know the snarlbot found obstructions in all four directions
+	//So, set direction to our first chosen direction
+
+	setDirection(firstChosen);
+}
+
+void KleptoBot::die()
+{
+	getWorld()->increaseScore(10);
+	getWorld()->playSound(SOUND_ROBOT_DIE);
+}
+
+
+/////////////////////////////////
+//   FACTORY IMPLEMENTATIONS   //
+/////////////////////////////////
+void Factory::doSomething()
+{
+
+}
+
+
+/////////////////////////////////
+//   BOULDER IMPLEMENTATIONS   //
+/////////////////////////////////
 bool Boulder::push(Direction dir)
 {
-	if (dir == up)
-	{
-		//find an Actor at the coordinates we are trying to push to
-		Actor* ap = getWorld()->getActor(getX(), getY() + 1);
+	int dx;
+	int dy;
 
-		//If we didnt find an actor, then the space is empty
-		//and we can just move the boulder. Return true to notify the 
-		//player that the boulder was pushed
-		if (ap == nullptr)
+	dirToDelta(dir, dx, dy);
+
+	//find an Actor at the coordinates we are trying to push to
+	Actor* ap = getWorld()->getActor(getX() + dx, getY() + dy);
+
+	//If we didnt find an actor, then the space is empty
+	//and we can just move the boulder. Return true to notify the 
+	//player that the boulder was pushed
+	if (ap == nullptr)
+	{
+		moveTo(getX() + dx, getY() + dy);
+		return true;
+	}
+	else
+	{
+		//if we found an actor on the coordinates, check if it is a hole
+		Hole* hp = dynamic_cast<Hole*>(ap);
+		if (hp)
 		{
-			moveTo(getX(), getY() + 1);
+			//if the actor at the push coordinates is a hole, then we are allowed
+			//to push the boulder on top of the hole. Again, return true to notify the player
+			moveTo(getX() + dx, getY() + dy);
 			return true;
 		}
-		else
-		{
-			//if we found an actor on the coordinates, check if it is a hole
-			Hole* hp = dynamic_cast<Hole*>(ap);
-			if (hp)
-			{
-				//if the actor at the push coordinates is a hole, then we are allowed
-				//to push the boulder on top of the hole. Again, return true to notify the player
-				moveTo(getX(), getY() + 1);
-				return true;
-			}
-		}
-
-		//return false to notify the player that the boulder could not be pushed
-		return false;
 	}
-	else if (dir == right)
-	{
-		Actor* ap = getWorld()->getActor(getX() + 1, getY());
 
-		if (ap == nullptr)
-		{
-			moveTo(getX() + 1, getY());
-			return true;
-		}
-		else
-		{
-			Hole* hp = dynamic_cast<Hole*>(ap);
-			if (hp)
-			{
-				moveTo(getX() + 1, getY());
-				return true;
-			}
-		}
-		return false;
-	}
-	else if (dir == down)
-	{
-		Actor* ap = getWorld()->getActor(getX(), getY() - 1);
-
-		if (ap == nullptr)
-		{
-			moveTo(getX(), getY() - 1);
-			return true;
-		}
-		else
-		{
-			Hole* hp = dynamic_cast<Hole*>(ap);
-			if (hp)
-			{
-				moveTo(getX(), getY() - 1);
-				return true;
-			}
-		}
-		return false;
-	}
-	else // (dir == left)
-	{
-		Actor* ap = getWorld()->getActor(getX()  - 1, getY());
-
-		if (ap == nullptr)
-		{
-			moveTo(getX() - 1, getY());
-			return true;
-		}
-		else
-		{
-			Hole* hp = dynamic_cast<Hole*>(ap);
-			if (hp)
-			{
-				moveTo(getX() - 1, getY());
-				return true;
-			}
-		}
-		return false;
-	}
+	//return false to notify the player that the boulder could not be pushed
+	return false;
 }
 
- 
+
+//////////////////////////////
+//   HOLE IMPLEMENTATIONS   //
+//////////////////////////////
 void Hole::doSomething()
 {
+	if (!isAlive())
+		return;
 	//look for a boulder on top of the hole
 	Boulder* bp = getWorld()->findBoulder(getX(), getY());
 
@@ -252,62 +401,51 @@ void Hole::doSomething()
 	}
 }
 
-bool Goodie::doSomethingGoodie()
-{
-	/*if (!isAlive())
-		return false;
-	else
-	{*/
-		//Check if the player is on top of the goodie
-		if (getWorld()->player()->getX() == getX()
-			&& getWorld()->player()->getY() == getY())
-		{
-			//If the player is ontop of the goodie, kill the goodie and play the correct sound
-			setDead();
-			getWorld()->playSound(SOUND_GOT_GOODIE);
-			return true;
-		}
-		return false;
-	//}
-}
 
-
-void Jewel::doSomething()
+////////////////////////////////
+//   GOODIE IMPLEMENTATIONS   //
+////////////////////////////////
+void Goodie::doSomething()
 {
-	if (doSomethingGoodie()) //The player got the goodie
+	//Check if the player is on top of the goodie
+	if (getWorld()->player()->getX() == getX()
+		&& getWorld()->player()->getY() == getY())
 	{
-		getWorld()->increaseScore(50);
-		getWorld()->getJewel();
+		//If the player is ontop of the goodie, kill the goodie and play the correct sound
+		setDead();
+		getWorld()->playSound(SOUND_GOT_GOODIE);
+		rewardPlayer(); //give the player the appropriate rewards for collecting a goodie
 	}
 }
 
-void ExtraLifeGoodie::doSomething()
+void Jewel::rewardPlayer()
 {
-	if (doSomethingGoodie()) //The player got the goodie
-	{
-		getWorld()->incLives();
-		getWorld()->increaseScore(1000);
-	}
+	getWorld()->increaseScore(50);
+	getWorld()->getJewel();
 }
 
-void AmmoGoodie::doSomething()
+void ExtraLifeGoodie::rewardPlayer()
 {
-	if (doSomethingGoodie()) //The player got the goodie
-	{
-		getWorld()->increaseScore(100);
-		getWorld()->player()->addAmmo();
-	}
+	getWorld()->incLives();
+	getWorld()->increaseScore(1000);
 }
 
-void RestoreHealthGoodie::doSomething()
+void AmmoGoodie::rewardPlayer()
 {
-	if (doSomethingGoodie()) //The player got the goodie
-	{
-		getWorld()->increaseScore(500);
-		getWorld()->player()->setHitpoints(20);
-	}
+	getWorld()->increaseScore(100);
+	getWorld()->player()->addAmmo();
 }
 
+void RestoreHealthGoodie::rewardPlayer()
+{
+	getWorld()->increaseScore(500);
+	getWorld()->player()->setHitpoints(20);
+}
+
+
+////////////////////////////////
+//   BULLET IMPLEMENTATIONS   //
+////////////////////////////////
 void Bullet::move(Direction dir)
 {
 	switch (dir)
@@ -327,10 +465,9 @@ void Bullet::move(Direction dir)
 	}
 }
 
-//void Buller::checkCurrentCoordinates()
 void Bullet::doSomething()
 {
-	if (!m_justSpawned)
+	if (true)
 	{
 		if (!isAlive())  //if the bullet is dead, we dont want to do anything
 			return;
@@ -348,6 +485,11 @@ void Bullet::doSomething()
 
 		if (ap != nullptr)
 		{
+			if (ap->blocksBullet())
+			{
+				setDead();
+				return;
+			}
 			//Check if the bullet is on top of an actor that it can hurt
 			//and act accordingly
 			HealthActor* hap = dynamic_cast<HealthActor*>(ap);
@@ -358,25 +500,12 @@ void Bullet::doSomething()
 				setDead();
 				return;
 			}
-
-			//check if the bullet is on top of an actor that it cannot hurt
-			//and act accordingly
-			Wall* wp = dynamic_cast<Wall*>(ap);
-
-			if (wp != nullptr)
-			{
-				setDead();
-				return;
-			}
-
-			//TODO: add checks for Actors that a bullet can be on top of
 		}
-
-
-		//At this point, we know the bullet should move past whatever actor it is on top of
-		move(getDirection());
 	}
-	m_justSpawned = false;
+	
+
+	//At this point, we know the bullet should move past whatever actor it is on top of
+	move(getDirection());
 	//Repeat the same algorithm as above to test whether the bullet should stay alive
 	//at its new coordinates
 
@@ -389,11 +518,15 @@ void Bullet::doSomething()
 	}
 
 	//Find an actor at the bullet's coordinates
-	Actor* ap = getWorld()->FindNOTBullet(getX(), getY());
-
+	Actor *ap = getWorld()->FindNOTBullet(getX(), getY());
 
 	if (ap != nullptr)
 	{
+		if (ap->blocksBullet())
+		{
+			setDead();
+			return;
+		}
 		//Check again if the bullet is on top of an actor it can hurt
 		HealthActor* hap = dynamic_cast<HealthActor*>(ap);
 
@@ -403,21 +536,17 @@ void Bullet::doSomething()
 			setDead();
 			return;
 		}
-
-		//check if the bullet is on top of an actor it cant hurt
-		Wall* wp = dynamic_cast<Wall*>(ap);
-
-		if (wp != nullptr)
-		{
-			setDead();
-			return;
-		}
-		//TODO: add checks for Actors that a bullet can be on top of
 	}
 }
 
+
+//////////////////////////////
+//   EXIT IMPLEMENTATIONS   //
+//////////////////////////////
 void Exit::doSomething()
 {
+	if (!isAlive())
+		return;
 	if (m_isVisible)
 	{
 		if (getWorld()->player()->getX() == getX() && getWorld()->player()->getY() == getY())
@@ -428,14 +557,11 @@ void Exit::doSomething()
 			getWorld()->completeLevel();
 		}
 	}
-	else
+	else if (getWorld()->jewelsLeft() == false)
 	{
-		if (!(getWorld()->jewelsLeft()))
-		{
-			getWorld()->playSound(SOUND_REVEAL_EXIT);
-			m_isVisible = true;
-			setVisible(true);
-		}
+		getWorld()->playSound(SOUND_REVEAL_EXIT);
+		m_isVisible = true;
+		setVisible(true);
 	}
 }
 		

@@ -70,6 +70,7 @@ public:
 	{
 		return m_jewels > 0;
 	}
+
 	//Level::MazeEntry whatTypeIsThis(Actor* ap);
 
 	void removeDeadActors();
