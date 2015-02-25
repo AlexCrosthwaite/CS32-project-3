@@ -10,6 +10,7 @@ class StudentWorld;
 
 // Students:  Add code to this file, Actor.cpp, StudentWorld.h, and StudentWorld.cpp
 
+class Goodie;
 
 ///////////////
 //   ACTOR   //
@@ -265,11 +266,11 @@ private:
 class KleptoBot : public Robot
 {
 public:
-	KleptoBot(int startX, int startY, StudentWorld* studentWorld)
-	: Robot(IID_KLEPTOBOT, startX, startY, studentWorld, right)
+	KleptoBot(int imageID, int startX, int startY, StudentWorld* studentWorld)
+	: Robot(imageID, startX, startY, studentWorld, right)
 	{
 		setHitpoints(5);
-		m_goodie = nullptr;
+		m_goodieType = Level::empty;
 		newDistance();
 	}
 
@@ -277,12 +278,14 @@ public:
 
 	bool holdingGoodie()
 	{
-		return m_goodie != nullptr;
+		return m_goodieType != Level::empty;
 	}
 
 	void move(Direction dir);
 
 	virtual void die();
+
+	virtual void pickUp(Goodie* goodie);
 
 	void newDistance()
 	{
@@ -292,9 +295,14 @@ public:
 
 	void newDirection();
 
+	Level::MazeEntry heldGoodie()
+	{
+		return m_goodieType;
+	}
+
 private:
 	int m_distanceBeforeTurning;
-	Actor* m_goodie;
+	Level::MazeEntry m_goodieType;
 };
 
 
@@ -304,7 +312,21 @@ private:
 class AngryKleptoBot : public KleptoBot
 {
 public:
+	AngryKleptoBot(int imageID, int startX, int startY, StudentWorld* studentWorld)
+		: KleptoBot(imageID, startX, startY, studentWorld)
+	{
+		setHitpoints(8);
+	}
+
+	void doSomething();
+
+	virtual void die();
+	
+private:
+
 };
+
+
 /////////////////
 //   BOULDER   //
 /////////////////
@@ -604,6 +626,5 @@ private:
 	bool m_isVisible;
 
 };
-
 
 #endif // ACTOR_H_

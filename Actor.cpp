@@ -233,8 +233,7 @@ void KleptoBot::doSomething()
 				int chanceToPickup = rand() % 10;
 				if (chanceToPickup == 0) //just choose one of the 10 options for when a goodie should be picked up
 				{
-					m_goodie = gp;
-					gp->setVisible(false);
+					pickUp(gp);
 					getWorld()->playSound(SOUND_ROBOT_MUNCH);
 					return;		//If the KleptoBot picked up the goodie, then it should do nothign else during this tick
 				}
@@ -261,10 +260,6 @@ void KleptoBot::doSomething()
 		else
 		{		//if the snarlbot is not blocked, then it can (and should) move
 			moveTo(getX() + dx, getY() + dy);
-			if (holdingGoodie()) //move the goodie with the kleptobot as well
-			{
-				m_goodie->moveTo(getX() + dx, getY() + dy);
-			}
 			m_distanceBeforeTurning--;
 			return;
 		}
@@ -308,10 +303,6 @@ void KleptoBot::newDirection()
 
 		if (ap == nullptr)
 		{
-			if (holdingGoodie())
-			{
-				m_goodie->moveTo(getX() + dx, getY() + dy); //move the goodie with the KleptoBot
-			}
 			setDirection(dir);
 			moveTo(getX() + dx, getY() + dy);
 			m_distanceBeforeTurning--;
@@ -336,10 +327,79 @@ void KleptoBot::die()
 	getWorld()->playSound(SOUND_ROBOT_DIE);
 	if (holdingGoodie())
 	{
-		m_goodie->setVisible(true);
+		getWorld()->dropGoodie(m_goodieType, getX(), getY());
 	}
 }
 
+void KleptoBot::pickUp(Goodie* goodie)
+{
+	AmmoGoodie* ag = dynamic_cast<AmmoGoodie*>(goodie);
+	if (ag != nullptr)
+	{
+		m_goodieType = Level::ammo;
+		goodie->setDead();
+		return;
+	}
+	RestoreHealthGoodie* rhg = dynamic_cast<RestoreHealthGoodie*>(goodie);
+	if (rhg != nullptr)
+	{
+		m_goodieType = Level::restore_health;
+		goodie->setDead();
+		return;
+	}
+	ExtraLifeGoodie* elg = dynamic_cast<ExtraLifeGoodie*>(goodie);
+	if (elg != nullptr)
+	{
+		m_goodieType = Level::extra_life;
+		goodie->setDead();
+		return;
+	}
+	Jewel* jg = dynamic_cast<Jewel*>(goodie);
+	if (jg != nullptr)
+	{
+		m_goodieType = Level::jewel;
+		goodie->setDead();
+		return;
+	}
+}
+
+
+/////////////////////////////////////////
+//   ANGRY KLEPTOBOT IMPLEMENTATIONS   //
+/////////////////////////////////////////
+void AngryKleptoBot::doSomething()
+{
+	if (!isAlive())
+		return;
+
+	if (ticksToWait() > 1)
+	{
+		wait();
+		return;
+	}
+
+	if (playerVisible())
+	{
+		getWorld()->ShootBullet(getX(), getY(), getDirection());
+		getWorld()->playSound(SOUND_ENEMY_FIRE);
+		resetTicks();
+		return;
+	}
+
+	//At this point, an angry kleptoBot should act the same as a normal kleptobot
+
+	KleptoBot::doSomething();
+}
+
+void AngryKleptoBot::die()
+{
+	getWorld()->increaseScore(20);
+	getWorld()->playSound(SOUND_ROBOT_DIE);
+	if (holdingGoodie())
+	{
+		getWorld()->dropGoodie(heldGoodie(), getX(), getY());
+	}
+}
 
 
 /////////////////////////////////
@@ -356,9 +416,9 @@ void Factory::doSomething()
 	{
 		int chance = rand() % 50; //The factory has a 1 in 50 chance of spawning a kleptobot
 
-		if (chance == 0)		//We will 0 to be our signal to spawn a KleptoBot
+		if (chance == 0)	//We will 0 to be our signal to spawn a KleptoBot
 		{
-			getWorld()->spawnKleptoBot(getX(), getY());
+			getWorld()->spawnKleptoBot(getX(), getY(), m_makesAngry);
 		}
 	}
 }
@@ -433,10 +493,11 @@ void Hole::doSomething()
 	if (!isAlive())
 		return;
 	//look for a boulder on top of the hole
-	Boulder* bp = getWorld()->findBoulder(getX(), getY());
+	Actor* bp = getWorld()->findBoulder(getX(), getY());
 
 	if (bp != nullptr)
 	{
+
 		//If we found a boulder, kill the hole and the boulder
 		setDead();
 		bp->setDead();

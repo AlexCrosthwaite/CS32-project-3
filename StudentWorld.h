@@ -85,11 +85,13 @@ public:
 	//add a bullet into the level
 	void ShootBullet(int x, int y, GraphObject::Direction dir);
 
-	void spawnKleptoBot(int x, int y);
+	void spawnKleptoBot(int x, int y, bool isAngry);
 
 	Actor* findObstruction(int x, int y);
 
 	Actor* FindNOTBullet(int x, int y);
+
+	void dropGoodie(Level::MazeEntry goodie, int x, int y);
 
 private:
 	std::list<Actor*> m_ActorList;

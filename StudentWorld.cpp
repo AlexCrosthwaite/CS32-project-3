@@ -230,9 +230,14 @@ void StudentWorld::ShootBullet(int x, int y, GraphObject::Direction dir)
 	}
 }
 
-void StudentWorld::spawnKleptoBot(int x, int y)
+void StudentWorld::spawnKleptoBot(int x, int y, bool isAngry)
 {
-	m_ActorList.push_back(new KleptoBot(x, y, this));
+	if (isAngry)
+	{
+		m_ActorList.push_back(new AngryKleptoBot(IID_ANGRY_KLEPTOBOT, x, y, this));
+	}
+	else
+		m_ActorList.push_back(new KleptoBot(IID_KLEPTOBOT, x, y, this));
 	playSound(SOUND_ROBOT_BORN);
 }
 
@@ -303,20 +308,30 @@ bool StudentWorld::foundKlepto(int x, int y)
 
 Boulder* StudentWorld::findBoulder(int x, int y)
 {
-	for (auto ap : m_ActorList)
+	Actor* ap = findObstruction(x, y);
+
+	Boulder* bp = dynamic_cast<Boulder*>(ap);
+
+	return bp != nullptr ? bp : nullptr;
+}
+
+void StudentWorld::dropGoodie(Level::MazeEntry goodie, int x, int y)
+{
+	switch (goodie)
 	{
-		if (ap->getX() == x && ap->getY() == y)
-		{
-			if (ap->isAlive())
-			{
-				Boulder* bp = dynamic_cast<Boulder*>(ap);
-				if (bp != nullptr)
-				{
-					return bp;
-				}
-			}
-		}
+	case Level::extra_life:
+		m_ActorList.push_back(new ExtraLifeGoodie(x, y, this));
+		break;
+	case Level::ammo:
+		m_ActorList.push_back(new AmmoGoodie(x, y, this));
+		break;
+	case Level::jewel:
+		m_ActorList.push_back(new Jewel(x, y, this));
+		break;
+	case Level::restore_health:
+		m_ActorList.push_back(new RestoreHealthGoodie(x, y, this));
+		break;
 	}
-	return nullptr;
+
 }
 // Students:  Add code to this file (if you wish), StudentWorld.h, Actor.h and Actor.cpp
