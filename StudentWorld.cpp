@@ -230,6 +230,12 @@ void StudentWorld::ShootBullet(int x, int y, GraphObject::Direction dir)
 	}
 }
 
+void StudentWorld::spawnKleptoBot(int x, int y)
+{
+	m_ActorList.push_back(new KleptoBot(x, y, this));
+	playSound(SOUND_ROBOT_BORN);
+}
+
 Actor* StudentWorld::FindNOTBullet(int x, int y)
 {
 	for (auto ap : m_ActorList)
@@ -241,6 +247,21 @@ Actor* StudentWorld::FindNOTBullet(int x, int y)
 				continue;
 			else
 				return ap;
+		}
+	}
+	return nullptr;
+}
+
+Actor* StudentWorld::findObstruction(int x, int y)
+{
+	for (auto ap : m_ActorList)
+	{
+		if (ap->getX() == x && ap->getY() == y)
+		{
+			if (ap->isAlive() && ap->blocksRobot())
+			{
+				return ap;
+			}
 		}
 	}
 	return nullptr;
@@ -259,6 +280,25 @@ Actor* StudentWorld::getActor(int x, int y)
 		}
 	}
 	return nullptr;
+}
+
+bool StudentWorld::foundKlepto(int x, int y)
+{
+	for (auto ap : m_ActorList)
+	{
+		if (ap->getX() == x && ap->getY() == y)
+		{
+			if (ap->isAlive())
+			{
+				KleptoBot* kbp = dynamic_cast<KleptoBot*>(ap);
+				if (kbp != nullptr)
+				{
+					return true;
+				}
+			}
+		}
+	}
+	return false;
 }
 
 Boulder* StudentWorld::findBoulder(int x, int y)

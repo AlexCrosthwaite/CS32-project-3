@@ -43,6 +43,7 @@ public:
 	//Use this function when you want to find a specific type, not just a generic actor
 	Boulder* findBoulder(int x, int y);
 
+	bool foundKlepto(int x, int y);
 
 	unsigned int getBonus()
 	{
@@ -83,6 +84,10 @@ public:
 
 	//add a bullet into the level
 	void ShootBullet(int x, int y, GraphObject::Direction dir);
+
+	void spawnKleptoBot(int x, int y);
+
+	Actor* findObstruction(int x, int y);
 
 	Actor* FindNOTBullet(int x, int y);
 

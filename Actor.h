@@ -52,17 +52,14 @@ public:
 		return true;
 	}
 
-	virtual bool blocksBullet()
-	{
-		return false;
-	}
-
-
-	//If something blocks a player, it blocks a robot
-	//except for boulders, which we will redfine in the boulder class
 	virtual bool blocksRobot()
 	{
 		return blocksPlayer();
+	}
+
+	virtual bool blocksBullet()
+	{
+		return false;
 	}
 
 	virtual bool blocksVision()
@@ -121,13 +118,13 @@ public:
 		if (m_hitpoints <= 0)
 		{
 			setDead();
-			die();
-		}
+			die();		//Perform the extra actions that must be done when a specific 
+		}				//Health actor dies.
 		else
 		{
-			getHit();
-		}
-	}
+			getHit();	//Perform the actions that must be done when a specific Health
+		}				//Actor gets hit.
+	}	
 
 	virtual void die() = 0;
 
@@ -268,7 +265,7 @@ private:
 class KleptoBot : public Robot
 {
 public:
-	KleptoBot(int startX, int startY, StudentWorld* studentWorld, Direction dir)
+	KleptoBot(int startX, int startY, StudentWorld* studentWorld)
 	: Robot(IID_KLEPTOBOT, startX, startY, studentWorld, right)
 	{
 		setHitpoints(5);
@@ -289,7 +286,8 @@ public:
 
 	void newDistance()
 	{
-		m_distanceBeforeTurning = rand() % 5 + 1;
+		//m_distanceBeforeTurning = rand() % 5 + 1;
+		m_distanceBeforeTurning = 7;
 	}
 
 	void newDirection();
@@ -300,6 +298,13 @@ private:
 };
 
 
+/////////////////////////
+//   ANGRY KLEPTOBOT   //
+/////////////////////////
+class AngryKleptoBot : public KleptoBot
+{
+public:
+};
 /////////////////
 //   BOULDER   //
 /////////////////

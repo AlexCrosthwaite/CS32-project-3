@@ -43,7 +43,6 @@ void Player::doSomething()
 		case KEY_PRESS_ESCAPE:
 			getWorld()->decLives();
 			break;
-
 		}
 	}
 }
@@ -57,23 +56,18 @@ void Player::move(Direction dir)
 
 	setDirection(dir);
 
-	Actor* ap = getWorld()->getActor(getX() + dx, getY() + dy);
+	Actor* ap = getWorld()->findObstruction(getX() + dx, getY() + dy);
 
-	if (!ap) //this means the spot is empty
+	if (ap == nullptr) //this means the spot is empty
 	{
 		moveTo(getX() + dx, getY() + dy);
 	}
 
-	else if (!(ap->blocksPlayer()))
-	{
-		Boulder* bp = dynamic_cast<Boulder*> (ap);
+	else if (!(ap->blocksPlayer()))		//The only obstruction that does not always block a player
+	{									//is a boulder
+		Boulder* bp = dynamic_cast<Boulder*>(ap);
 
-		if (bp == nullptr) // Here, we know the player can walk directly onto the other actor.
-		{				   //We know if this check fails, then the player tried to walk onto a boulder
-			moveTo(getX() + dx, getY() + dy);
-		}
-
-		else if (bp->push(dir) == true) //check to see if we can move the boulder
+		if (bp->push(dir) == true) //check to see if we can move the boulder
 		{
 			moveTo(getX() + dx, getY() + dy);
 		}
@@ -119,12 +113,6 @@ void Robot::getHit()
 	getWorld()->playSound(SOUND_ROBOT_IMPACT);
 }
 
-void SnarlBot::die()
-{
-	getWorld()->increaseScore(100);
-	getWorld()->playSound(SOUND_ROBOT_DIE);
-}
-
 bool Robot::playerVisible()
 {
 	int dx;
@@ -134,7 +122,7 @@ bool Robot::playerVisible()
 	{
 		if (getWorld()->player()->getX() == getX() + i*dx && getWorld()->player()->getY() == getY() + i*dy)
 			return true;
-		Actor* ap = getWorld()->getActor(getX() + i*dx, getY() + i*dy);
+		Actor* ap = getWorld()->findObstruction(getX() + i*dx, getY() + i*dy);
 		if (ap == nullptr)
 			continue;
 		else if (ap->blocksVision())
@@ -177,10 +165,10 @@ void SnarlBot::move(Direction dir)
 
 	dirToDelta(dir, dx, dy);
 
-	Actor* ap = getWorld()->FindNOTBullet(getX() + dx, getY() + dy);
+	Actor* ap = getWorld()->findObstruction(getX() + dx, getY() + dy);
 
 	
-	if (ap != nullptr && ap->blocksRobot()) //anything that blocks a player blocks a robot as well
+	if (ap != nullptr) //anything that blocks a player blocks a robot as well
 	{
 		reverseDirection(dir); //If the snarlbot cant move, reverse its direction
 	}
@@ -209,6 +197,12 @@ void SnarlBot::reverseDirection(Direction dir)
 	}
 }
 
+void SnarlBot::die()
+{
+	getWorld()->increaseScore(100);
+	getWorld()->playSound(SOUND_ROBOT_DIE);
+}
+
 
 ///////////////////////////////////
 //   KLEPTOBOT IMPLEMENTATIONS   //
@@ -222,24 +216,30 @@ void KleptoBot::doSomething()
 		wait();
 		return;
 	}
+	//At this point, the KleptoBot should do something.
+	//So, we should reset its tick count
+
+	resetTicks();
+
 	if (!holdingGoodie())
 	{
 		Actor* ap = getWorld()->FindNOTBullet(getX(), getY());
-		if (ap == nullptr)
-			return;
-		Goodie* gp = dynamic_cast<Goodie*>(ap);
-		
-		if (gp != nullptr)
+		if (ap != nullptr)
 		{
-			int chanceToPickup = rand() % 10;
-			if (chanceToPickup == 0) //just choose one of the 10 options for when a goodie should be picked up
+			Goodie* gp = dynamic_cast<Goodie*>(ap);
+
+			if (gp != nullptr)
 			{
-				m_goodie = gp;
-				gp->setVisible(false);
-				getWorld()->playSound(SOUND_ROBOT_MUNCH);
+				int chanceToPickup = rand() % 10;
+				if (chanceToPickup == 0) //just choose one of the 10 options for when a goodie should be picked up
+				{
+					m_goodie = gp;
+					gp->setVisible(false);
+					getWorld()->playSound(SOUND_ROBOT_MUNCH);
+					return;		//If the KleptoBot picked up the goodie, then it should do nothign else during this tick
+				}
 			}
 		}
-		return;
 	}
 	
 	if (m_distanceBeforeTurning > 0)
@@ -249,12 +249,14 @@ void KleptoBot::doSomething()
 
 		dirToDelta(getDirection(), dx, dy);
 
-		Actor* ap = getWorld()->FindNOTBullet(getX() + dx, getY() + dy);
+		Actor* ap = getWorld()->findObstruction(getX() + dx, getY() + dy);
 
 
-		if (ap != nullptr && ap->blocksRobot()) //anything that blocks a player blocks a robot as well
-		{
-			m_distanceBeforeTurning = 0; //if the kleptobot can't move, it needs to turn on the next tick
+		if (ap != nullptr) //Here, the robot is blocked
+		{ 
+			newDistance();
+			newDirection();
+			return;
 		}
 		else
 		{		//if the snarlbot is not blocked, then it can (and should) move
@@ -264,15 +266,14 @@ void KleptoBot::doSomething()
 				m_goodie->moveTo(getX() + dx, getY() + dy);
 			}
 			m_distanceBeforeTurning--;
+			return;
 		}
-		return;
 	}
 
 	//Here, the KleptoBot must choose a new direction to face, since it is supposed to turn
 	
 	//Also, we must set distanceBeforeTurning again
 	newDistance();
-	
 	newDirection();
 }
 
@@ -303,9 +304,9 @@ void KleptoBot::newDirection()
 
 		dirToDelta(dir, dx, dy);
 
-		Actor* ap = getWorld()->FindNOTBullet(getX() + dx, getY() + dy);
+		Actor* ap = getWorld()->findObstruction(getX() + dx, getY() + dy);
 
-		if (ap == nullptr || !ap->blocksRobot())
+		if (ap == nullptr)
 		{
 			if (holdingGoodie())
 			{
@@ -313,6 +314,7 @@ void KleptoBot::newDirection()
 			}
 			setDirection(dir);
 			moveTo(getX() + dx, getY() + dy);
+			m_distanceBeforeTurning--;
 			return;
 		}
 		else
@@ -332,7 +334,12 @@ void KleptoBot::die()
 {
 	getWorld()->increaseScore(10);
 	getWorld()->playSound(SOUND_ROBOT_DIE);
+	if (holdingGoodie())
+	{
+		m_goodie->setVisible(true);
+	}
 }
+
 
 
 /////////////////////////////////
@@ -340,7 +347,42 @@ void KleptoBot::die()
 /////////////////////////////////
 void Factory::doSomething()
 {
+	if (getWorld()->foundKlepto(getX(), getY()))
+	{
+		return;			//If the factory has a kleptobot ontop of it, it cant do anything
+	}
 
+	if (countKleptoBots() < 3)
+	{
+		int chance = rand() % 50; //The factory has a 1 in 50 chance of spawning a kleptobot
+
+		if (chance == 0)		//We will 0 to be our signal to spawn a KleptoBot
+		{
+			getWorld()->spawnKleptoBot(getX(), getY());
+		}
+	}
+}
+
+int Factory::countKleptoBots()
+{
+	int x = getX();
+	int y = getY();
+
+	int count = 0;
+
+	for (int i = -3; i < 4; i++)
+	{
+		if (x + i < 0 || x + i >= VIEW_WIDTH)		//dont check out of bounds if we dont need to
+			continue;
+		for (int j = -3; j < 4; j++)
+		{
+			if (y + j < 0 || y + j >= VIEW_HEIGHT)
+				continue;			//dont check out of bounds if we dont need to
+			if (getWorld()->foundKlepto(x + i, y + j))
+				count++;
+		}
+	}
+	return count;
 }
 
 
@@ -481,7 +523,7 @@ void Bullet::doSomething()
 		}
 
 		//Find an actor at the bullet's coordinates
-		Actor* ap = getWorld()->FindNOTBullet(getX(), getY());
+		Actor* ap = getWorld()->findObstruction(getX(), getY());
 
 		if (ap != nullptr)
 		{
@@ -490,8 +532,6 @@ void Bullet::doSomething()
 				setDead();
 				return;
 			}
-			//Check if the bullet is on top of an actor that it can hurt
-			//and act accordingly
 			HealthActor* hap = dynamic_cast<HealthActor*>(ap);
 
 			if (hap != nullptr)
@@ -506,6 +546,7 @@ void Bullet::doSomething()
 
 	//At this point, we know the bullet should move past whatever actor it is on top of
 	move(getDirection());
+
 	//Repeat the same algorithm as above to test whether the bullet should stay alive
 	//at its new coordinates
 
@@ -518,7 +559,7 @@ void Bullet::doSomething()
 	}
 
 	//Find an actor at the bullet's coordinates
-	Actor *ap = getWorld()->FindNOTBullet(getX(), getY());
+	Actor *ap = getWorld()->findObstruction(getX(), getY());
 
 	if (ap != nullptr)
 	{
