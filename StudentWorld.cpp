@@ -127,6 +127,8 @@ int StudentWorld::init()
 	if (getLevel() == 100)
 		return GWSTATUS_PLAYER_WON;
 
+	m_jewels = 0;
+
 	int result = loadAlevel(); //load the next level and store the result  of the load
 
 	if (result == Level::load_fail_bad_format)
@@ -158,7 +160,6 @@ int StudentWorld::move()
 
 			if (getLives() < livesBefore)
 			{
-				increaseScore(getScore()*-1);
 				return GWSTATUS_PLAYER_DIED;
 			}
 
@@ -193,7 +194,6 @@ void StudentWorld::cleanUp()
 		ap = m_ActorList.erase(ap);
 	}
 }
-
 
 void StudentWorld::removeDeadActors()
 {
@@ -308,11 +308,38 @@ bool StudentWorld::foundKlepto(int x, int y)
 
 Boulder* StudentWorld::findBoulder(int x, int y)
 {
-	Actor* ap = findObstruction(x, y);
+	for (auto ap : m_ActorList)
+	{
+		if (ap->getX() == x && ap->getY() == y)
+		{
+			if (ap->isAlive())
+			{
+				Boulder* bp = dynamic_cast<Boulder*>(ap);
 
-	Boulder* bp = dynamic_cast<Boulder*>(ap);
+				if (bp != nullptr)
+				{
+					return bp;
+				}
+			}
+		}
+	}
+	return nullptr;
+}
 
-	return bp != nullptr ? bp : nullptr;
+Actor* StudentWorld::findDamageable(int x, int y)
+{
+	for (auto ap : m_ActorList)
+	{
+		if (ap->isDamageable() && ap->getX() == x && ap->getY() == y)
+		{
+			if (ap->isAlive())
+			{
+				return ap;
+			}
+		}
+	}
+
+	return findObstruction(x, y);
 }
 
 void StudentWorld::dropGoodie(Level::MazeEntry goodie, int x, int y)

@@ -68,6 +68,11 @@ public:
 		return true;
 	}
 
+	virtual bool isDamageable()
+	{
+		return false;
+	}
+
 	void dirToDelta(Direction dir, int& dx, int& dy)
 	{
 		switch (dir)
@@ -139,6 +144,11 @@ public:
 	int getHitpoints()
 	{
 		return m_hitpoints;
+	}
+
+	virtual bool isDamageable()
+	{
+		return true;
 	}
 
 private:
@@ -225,7 +235,7 @@ public:
 
 	void resetTicks();
 
-	virtual void getHit();
+	void getHit();
 
 	bool playerVisible();
 
@@ -281,16 +291,13 @@ public:
 		return m_goodieType != Level::empty;
 	}
 
-	void move(Direction dir);
-
 	virtual void die();
 
-	virtual void pickUp(Goodie* goodie);
+	void pickUp(Goodie* goodie);
 
 	void newDistance()
 	{
-		//m_distanceBeforeTurning = rand() % 5 + 1;
-		m_distanceBeforeTurning = 7;
+		m_distanceBeforeTurning = rand() % 5 + 1;
 	}
 
 	void newDirection();
@@ -393,8 +400,6 @@ public:
 
 	int countKleptoBots();
 
-	void createKleptoBot();
-
 private:
 	bool m_makesAngry;
 };
@@ -460,13 +465,15 @@ public:
 	{
 	}
 
-	~Goodie()
-	{
-	}
 
-	virtual bool blocksPlayer()
+	bool blocksPlayer()
 	{
 		return false;
+	}
+
+	virtual bool isStealable()
+	{
+		return true;
 	}
 
 	bool blocksVision()
@@ -476,7 +483,7 @@ public:
 
 	virtual void rewardPlayer() = 0;
 
-	virtual void doSomething();
+	void doSomething();
 
 private:
 
@@ -496,6 +503,10 @@ public:
 
 	virtual void rewardPlayer();
 
+	virtual bool isStealable()
+	{
+		return false;
+	}
 private:
 
 };
@@ -564,7 +575,6 @@ public:
 	Bullet(int startX, int startY, StudentWorld* studentWorld, Direction dir)
 	: Actor(IID_BULLET, startX, startY, studentWorld, dir)
 	{
-		m_justSpawned = true;
 	}
 
 	void doSomething();
@@ -582,7 +592,7 @@ public:
 	}
 
 private:
-	bool m_justSpawned;
+	
 };
 
 

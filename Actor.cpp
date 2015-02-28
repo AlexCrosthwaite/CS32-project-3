@@ -228,7 +228,7 @@ void KleptoBot::doSomething()
 		{
 			Goodie* gp = dynamic_cast<Goodie*>(ap);
 
-			if (gp != nullptr)
+			if (gp != nullptr && gp->isStealable())
 			{
 				int chanceToPickup = rand() % 10;
 				if (chanceToPickup == 0) //just choose one of the 10 options for when a goodie should be picked up
@@ -246,7 +246,15 @@ void KleptoBot::doSomething()
 		int dx;
 		int dy;
 
-		dirToDelta(getDirection(), dx, dy);
+ 		dirToDelta(getDirection(), dx, dy);
+
+		if (getWorld()->player()->getX() == getX() + dx 
+			&& getWorld()->player()->getY() == getY() + dy)
+		{
+			newDistance();
+			newDirection();
+			return;
+		}
 
 		Actor* ap = getWorld()->findObstruction(getX() + dx, getY() + dy);
 
@@ -299,6 +307,14 @@ void KleptoBot::newDirection()
 
 		dirToDelta(dir, dx, dy);
 
+
+		if (getWorld()->player()->getX() == getX() + dx
+			&& getWorld()->player()->getY() == getY() + dy)
+		{
+			da[i] = da[directionsLeft - 1];
+			directionsLeft--;
+			continue;
+		}
 		Actor* ap = getWorld()->findObstruction(getX() + dx, getY() + dy);
 
 		if (ap == nullptr)
@@ -351,13 +367,6 @@ void KleptoBot::pickUp(Goodie* goodie)
 	if (elg != nullptr)
 	{
 		m_goodieType = Level::extra_life;
-		goodie->setDead();
-		return;
-	}
-	Jewel* jg = dynamic_cast<Jewel*>(goodie);
-	if (jg != nullptr)
-	{
-		m_goodieType = Level::jewel;
 		goodie->setDead();
 		return;
 	}
@@ -497,7 +506,6 @@ void Hole::doSomething()
 
 	if (bp != nullptr)
 	{
-
 		//If we found a boulder, kill the hole and the boulder
 		setDead();
 		bp->setDead();
@@ -584,7 +592,7 @@ void Bullet::doSomething()
 		}
 
 		//Find an actor at the bullet's coordinates
-		Actor* ap = getWorld()->findObstruction(getX(), getY());
+		Actor* ap = getWorld()->findDamageable(getX(), getY());
 
 		if (ap != nullptr)
 		{

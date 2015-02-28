@@ -91,6 +91,8 @@ public:
 
 	Actor* FindNOTBullet(int x, int y);
 
+	Actor* findDamageable(int x, int y);
+
 	void dropGoodie(Level::MazeEntry goodie, int x, int y);
 
 private:
